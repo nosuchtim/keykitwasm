@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KeyKit - WebAssembly Music Programming</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #f0f0f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #4CAF50;
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            color: #888;
+            margin: 0 0 20px 0;
+            font-size: 1.2em;
+        }
+
+        #container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        #canvas-container {
+            position: relative;
+            margin: 20px 0;
+            border: 3px solid #4CAF50;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+            background: #000;
+        }
+
+        #keykit-canvas {
+            display: block;
+            border-radius: 5px;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        #output {
+            width: 100%;
+            max-width: 1024px;
+            height: 300px;
+            background: #0a0a0a;
+            border: 2px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            color: #0f0;
+            overflow-y: auto;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        #status {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+
+        .progress {
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+            max-width: 500px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .info-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            max-width: 1024px;
+            width: 100%;
+        }
+
+        .info-box h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+
+        .info-box ul {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            margin: 5px 0;
+        }
+
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Emscripten default styling overrides */
+        .emscripten {
+            padding: 0;
+            margin: 0;
+        }
+
+        #emscripten_logo {
+            display: none;
+        }
+
+        textarea.emscripten {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>🎹 KeyKit WebAssembly</h1>
+        <p class="subtitle">Music Programming Language in Your Browser</p>
+
+        <div class="info-box">
+            <h3>Getting Started</h3>
+            <ul>
+                <li><strong>Graphics:</strong> KeyKit graphics are rendered on the canvas below</li>
+                <li><strong>MIDI:</strong> Connect MIDI devices and grant permissions to use real MIDI I/O</li>
+                <li><strong>Mouse:</strong> Click and drag on the canvas for interactive graphics</li>
+                <li><strong>Keyboard:</strong> Type on your keyboard for KeyKit input</li>
+            </ul>
+        </div>
+
+        <div id="status">
+            <div>Status: <span id="status-text">Loading...</span></div>
+            <div class="progress">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <div id="canvas-container">
+            <canvas id="keykit-canvas" width="1024" height="768" tabindex="0"></canvas>
+        </div>
+
+        <div class="info-box">
+            <h3>Console Output</h3>
+            <div id="output"></div>
+        </div>
+
+        <div class="info-box">
+            <h3>About KeyKit</h3>
+            <p>
+                KeyKit is a music programming language and MIDI toolkit. This WebAssembly port
+                brings KeyKit's powerful music programming capabilities to the browser, with
+                full support for Canvas graphics, Web MIDI API, and interactive input.
+            </p>
+            <p>
+                Learn more: <a href="https://github.com/yourrepo/keykitweb" target="_blank">GitHub Repository</a>
+            </p>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // Function to load KeyKit library files into virtual filesystem
+        // Uses addRunDependency to block main() until files are loaded
+        function loadLibraryFiles() {
+            console.log('Loading KeyKit library files...');
+
+            // Tell Emscripten to wait for our async operation
+            Module.addRunDependency('loadLibraryFiles');
+
+            // Create the virtual /keykit/lib directory
+            try {
+                Module.FS.mkdir('/keykit');
+            } catch (err) { /* may exist */ }
+            try {
+                Module.FS.mkdir('/keykit/lib');
+            } catch (err) { /* may exist */ }
+            console.log('Created /keykit/lib directory');
+
+            // Start async loading
+            (async function() {
+                try {
+                    // Fetch the manifest file
+                    const response = await fetch('../lib/lib_manifest.json');
+                    const libFiles = await response.json();
+
+                    console.log(`Found ${libFiles.length} library files in manifest`);
+
+                    // Load each file
+                    let loaded = 0;
+                    const batchSize = 10;
+
+                    for (let i = 0; i < libFiles.length; i += batchSize) {
+                        const batch = libFiles.slice(i, i + batchSize);
+
+                        await Promise.all(batch.map(async (filename) => {
+                            try {
+                                const fileResponse = await fetch(`../lib/${filename}`);
+                                const content = await fileResponse.arrayBuffer();
+                                const uint8Array = new Uint8Array(content);
+
+                                Module.FS.writeFile(`/keykit/lib/${filename}`, uint8Array);
+                                loaded++;
+                            } catch (err) {
+                                console.warn(`Failed to load ${filename}:`, err);
+                            }
+                        }));
+
+                        // Update progress
+                        if (loaded % 50 === 0 || i + batchSize >= libFiles.length) {
+                            console.log(`Loaded ${loaded}/${libFiles.length} files...`);
+                            Module.setStatus(`Loading library (${loaded}/${libFiles.length})...`);
+                        }
+                    }
+
+                    console.log(`✓ Successfully loaded ${loaded} library files into /keykit/lib/`);
+
+                    // List files to verify
+                    const files = Module.FS.readdir('/keykit/lib');
+                    console.log(`Virtual filesystem contains ${files.length - 2} files`);
+
+                } catch (err) {
+                    console.error('Error loading library files:', err);
+                    console.log('Continuing without library files...');
+                }
+
+                // Allow main() to proceed
+                Module.removeRunDependency('loadLibraryFiles');
+            })();
+        }
+
+        // Configuration for Emscripten Module
+        var Module = {
+            preRun: [loadLibraryFiles],
+            postRun: [],
+            print: (function() {
+                var element = document.getElementById('output');
+                if (element) element.value = ''; // Clear on load
+                return function(text) {
+                    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                    console.log(text);
+                    if (element) {
+                        element.innerHTML += text + '\n';
+                        element.scrollTop = element.scrollHeight; // Scroll to bottom
+                    }
+                };
+            })(),
+            printErr: function(text) {
+                if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                console.error(text);
+                var element = document.getElementById('output');
+                if (element) {
+                    element.innerHTML += '<span style="color: #ff5555;">' + text + '</span>\n';
+                    element.scrollTop = element.scrollHeight;
+                }
+            },
+            canvas: (function() {
+                var canvas = document.getElementById('keykit-canvas');
+
+                // Prevent right-click context menu
+                canvas.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                }, false);
+
+                // Make canvas focusable for keyboard input
+                canvas.tabIndex = 0;
+                canvas.focus();
+
+                return canvas;
+            })(),
+            setStatus: function(text) {
+                var statusElement = document.getElementById('status-text');
+                var progressBar = document.getElementById('progress-bar');
+
+                if (!text) {
+                    // Module is ready
+                    statusElement.textContent = 'Ready';
+                    statusElement.style.color = '#4CAF50';
+                    progressBar.style.width = '100%';
+                    setTimeout(function() {
+                        document.getElementById('status').style.display = 'none';
+                    }, 1000);
+                } else {
+                    statusElement.textContent = text;
+                    statusElement.style.color = '#fff';
+
+                    // Parse progress from status text
+                    var match = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+                    if (match) {
+                        var now = parseFloat(match[2]);
+                        var total = parseFloat(match[4]);
+                        var percent = (now / total) * 100;
+                        progressBar.style.width = percent + '%';
+                    }
+                }
+            },
+            totalDependencies: 0,
+            monitorRunDependencies: function(left) {
+                this.totalDependencies = Math.max(this.totalDependencies, left);
+                Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+            }
+        };
+
+        Module.setStatus('Downloading...');
+
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            var string = msg.toLowerCase();
+            var substring = "script error";
+            if (string.indexOf(substring) > -1) {
+                alert('Script Error: See Browser Console for Detail');
+            } else {
+                var message = [
+                    'Message: ' + msg,
+                    'URL: ' + url,
+                    'Line: ' + lineNo,
+                    'Column: ' + columnNo,
+                    'Error object: ' + JSON.stringify(error)
+                ].join(' - ');
+
+                alert(message);
+            }
+            return false;
+        };
+
+        // Request MIDI permissions on page load (optional)
+        window.addEventListener('load', function() {
+            console.log('KeyKit WebAssembly shell loaded successfully');
+        });
+    </script>
+
+    {{{ SCRIPT }}}
+</body>
+</html>

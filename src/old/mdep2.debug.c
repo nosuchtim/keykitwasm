@@ -1122,6 +1122,7 @@ mdep_keypath(void)
 		path = uniqstr(p);
 		kfree(p);
 	}
+	sprintf(Msg2,"mdep_keypath = %s\n",path);
 	return path;
 }
 

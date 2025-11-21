@@ -4,6 +4,7 @@
 #include <emscripten.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 // Declare external JavaScript functions
 // These will be defined in a separate .js file or in --js-library
@@ -171,6 +172,258 @@ void animate_bouncing_ball() {
   }
 }
 
+// ========== MIDI DEVICE LISTING (Web MIDI API) ==========
+
+// External JavaScript functions for Web MIDI API
+extern int js_get_midi_input_count();
+extern int js_get_midi_output_count();
+extern void js_get_midi_input_name(int index, char *buffer, int buffer_size);
+extern void js_get_midi_output_name(int index, char *buffer, int buffer_size);
+extern void js_request_midi_access();
+extern void js_open_midi_inputs();
+
+// Get number of MIDI input devices (calls Web MIDI API)
+int get_midi_input_count() {
+    return js_get_midi_input_count();
+}
+
+// Get number of MIDI output devices (calls Web MIDI API)
+int get_midi_output_count() {
+    return js_get_midi_output_count();
+}
+
+// Get MIDI input device name by index
+void get_midi_input_name(int index, char *buffer, int buffer_size) {
+    js_get_midi_input_name(index, buffer, buffer_size);
+}
+
+// Get MIDI output device name by index
+void get_midi_output_name(int index, char *buffer, int buffer_size) {
+    js_get_midi_output_name(index, buffer, buffer_size);
+}
+
+// Request MIDI access from browser
+void request_midi_access() {
+    js_request_midi_access();
+}
+
+// Draw MIDI device list on canvas in two columns
+void draw_midi_devices(int x, int y) {
+    js_set_font("bold 16px Arial");
+    js_set_color("darkgreen");
+    js_draw_text(x, y, "MIDI Devices:");
+
+    int column_width = 380;
+    int input_x = x + 10;
+    int output_x = x + column_width + 20;
+    int current_y = y + 25;
+
+    // Draw MIDI Inputs (Left Column)
+    js_set_font("bold 14px Arial");
+    js_set_color("blue");
+    js_draw_text(input_x, current_y, "Inputs:");
+
+    js_set_font("12px monospace");
+    js_set_color("black");
+
+    int input_y = current_y + 20;
+    int input_count = get_midi_input_count();
+    if (input_count == 0) {
+        js_set_color("gray");
+        js_draw_text(input_x, input_y, "  No MIDI inputs found");
+        input_y += 18;
+    } else {
+        for (int i = 0; i < input_count; i++) {
+            char device_name[256];
+            char label[300];
+            get_midi_input_name(i, device_name, sizeof(device_name));
+            sprintf(label, "  [%d] %s", i, device_name);
+            js_draw_text(input_x, input_y, label);
+            input_y += 18;
+        }
+    }
+
+    // Draw MIDI Outputs (Right Column)
+    js_set_font("bold 14px Arial");
+    js_set_color("blue");
+    js_draw_text(output_x, current_y, "Outputs:");
+
+    js_set_font("12px monospace");
+    js_set_color("black");
+
+    int output_y = current_y + 20;
+    int output_count = get_midi_output_count();
+    if (output_count == 0) {
+        js_set_color("gray");
+        js_draw_text(output_x, output_y, "  No MIDI outputs found");
+        output_y += 18;
+    } else {
+        for (int i = 0; i < output_count; i++) {
+            char device_name[256];
+            char label[300];
+            get_midi_output_name(i, device_name, sizeof(device_name));
+            sprintf(label, "  [%d] %s", i, device_name);
+            js_draw_text(output_x, output_y, label);
+            output_y += 18;
+        }
+    }
+
+    // Draw borders around each column
+    js_set_color("darkgreen");
+    js_set_line_width(2);
+
+    // Calculate box heights for each column
+    int input_height = input_y - current_y + 10;
+    int output_height = output_y - current_y + 10;
+    int max_height = input_height > output_height ? input_height : output_height;
+
+    // Draw overall border
+    js_draw_rect(x - 5, y - 20, column_width * 2 + 35, max_height);
+
+    // Draw vertical divider between columns
+    js_set_line_width(1);
+    js_draw_line(x + column_width + 10, current_y - 5, x + column_width + 10, y + max_height - 20);
+}
+
+// ========== MIDI MESSAGE DISPLAY ==========
+
+#define MAX_MIDI_MESSAGES 10
+static char midi_messages[MAX_MIDI_MESSAGES][256];
+static int midi_message_count = 0;
+
+// Forward declaration
+void draw_midi_message_area();
+
+// Add a MIDI message to the display buffer
+void add_midi_message(const char *msg) {
+  // Shift messages up
+  for (int i = MAX_MIDI_MESSAGES - 1; i > 0; i--) {
+    strcpy(midi_messages[i], midi_messages[i-1]);
+  }
+
+  // Add new message at top
+  strncpy(midi_messages[0], msg, 255);
+  midi_messages[0][255] = '\0';
+
+  if (midi_message_count < MAX_MIDI_MESSAGES) {
+    midi_message_count++;
+  }
+
+  // Redraw the MIDI message area
+  draw_midi_message_area();
+}
+
+// Draw the MIDI message display area
+void draw_midi_message_area() {
+  int x = 20;
+  int y = 340;
+  int width = 760;
+  int height = 220;
+
+  // Clear the area with a dark background
+  js_set_color("rgba(0, 0, 0, 0.85)");
+  js_fill_rect(x, y, width, height);
+
+  // Draw border
+  js_set_color("lime");
+  js_set_line_width(2);
+  js_draw_rect(x, y, width, height);
+
+  // Draw title
+  js_set_font("bold 14px monospace");
+  js_set_color("lime");
+  js_draw_text(x + 10, y + 20, "MIDI MESSAGES (Last 10):");
+
+  // Draw messages
+  js_set_font("12px monospace");
+  for (int i = 0; i < midi_message_count; i++) {
+    int msg_y = y + 45 + i * 18;
+    js_draw_text(x + 15, msg_y, midi_messages[i]);
+  }
+
+  // Draw "waiting" message if no messages yet
+  if (midi_message_count == 0) {
+    js_set_color("gray");
+    js_draw_text(x + 15, y + 45, "Waiting for MIDI input...");
+  }
+}
+
+// Called from JavaScript when a MIDI message is received
+EMSCRIPTEN_KEEPALIVE
+void on_midi_message(int device_index, int status, int data1, int data2) {
+  char msg[256];
+  char device_name[128];
+
+  get_midi_input_name(device_index, device_name, sizeof(device_name));
+
+  // Decode MIDI message type
+  int msg_type = (status >> 4) & 0x0F;
+  int channel = status & 0x0F;
+
+  const char *type_str = "Unknown";
+
+  if (msg_type == 0x08) {
+    type_str = "Note Off";
+    sprintf(msg, "[%s] Ch%d: %s Note=%d Vel=%d",
+            device_name, channel + 1, type_str, data1, data2);
+  } else if (msg_type == 0x09) {
+    if (data2 == 0) {
+      type_str = "Note Off";
+    } else {
+      type_str = "Note On";
+    }
+    sprintf(msg, "[%s] Ch%d: %s Note=%d Vel=%d",
+            device_name, channel + 1, type_str, data1, data2);
+  } else if (msg_type == 0x0A) {
+    type_str = "Aftertouch";
+    sprintf(msg, "[%s] Ch%d: %s Note=%d Pressure=%d",
+            device_name, channel + 1, type_str, data1, data2);
+  } else if (msg_type == 0x0B) {
+    type_str = "CC";
+    sprintf(msg, "[%s] Ch%d: %s Controller=%d Value=%d",
+            device_name, channel + 1, type_str, data1, data2);
+  } else if (msg_type == 0x0C) {
+    type_str = "Program";
+    sprintf(msg, "[%s] Ch%d: %s Program=%d",
+            device_name, channel + 1, type_str, data1);
+  } else if (msg_type == 0x0D) {
+    type_str = "Chan Pressure";
+    sprintf(msg, "[%s] Ch%d: %s Pressure=%d",
+            device_name, channel + 1, type_str, data1);
+  } else if (msg_type == 0x0E) {
+    type_str = "Pitch Bend";
+    int bend_value = (data2 << 7) | data1;
+    sprintf(msg, "[%s] Ch%d: %s Value=%d",
+            device_name, channel + 1, type_str, bend_value);
+  } else {
+    sprintf(msg, "[%s] Status=0x%02X Data1=%d Data2=%d",
+            device_name, status, data1, data2);
+  }
+
+  add_midi_message(msg);
+  printf("MIDI: %s\n", msg);
+}
+
+// ========== CALLBACK FOR MIDI READY ==========
+
+// Called from JavaScript when MIDI devices are ready
+EMSCRIPTEN_KEEPALIVE
+void on_midi_ready() {
+  printf("MIDI devices ready! Redrawing MIDI device list...\n");
+  printf("Found %d MIDI inputs and %d MIDI outputs\n",
+         get_midi_input_count(), get_midi_output_count());
+
+  // Redraw the MIDI device section at top
+  draw_midi_devices(20, 140);
+
+  // Open all MIDI inputs
+  js_open_midi_inputs();
+  printf("Opening all MIDI input devices for monitoring...\n");
+
+  // Draw initial MIDI message area
+  draw_midi_message_area();
+}
+
 // ========== MOUSE EVENT HANDLING ==========
 
 // Global variables to track mouse state
@@ -291,6 +544,10 @@ void setup_mouse_events() {
 int main() {
   printf("Advanced Canvas Drawing Demo\n");
 
+  // Request MIDI access from browser
+  request_midi_access();
+  printf("Requesting MIDI access...\n");
+
   // Clear canvas
   js_clear_canvas();
 
@@ -301,31 +558,36 @@ int main() {
   // Draw title and instructions
   js_set_font("bold 24px Arial");
   js_set_color("darkblue");
-  js_draw_text(20, 30, "Advanced Canvas Demo with Mouse Interaction");
+  js_draw_text(20, 30, "Advanced Canvas Demo with MIDI & Mouse");
 
   js_set_font("16px Arial");
   js_set_color("black");
-  js_draw_text(20, 60, "Click and drag anywhere to draw with cyan lines!");
-  js_draw_text(20, 85, "Watch the event log at the bottom of the canvas");
+  js_draw_text(20, 60, "All MIDI inputs are monitored - play notes/send MIDI to see messages!");
+  js_draw_text(20, 85, "Click and drag to draw with cyan lines");
+  js_draw_text(20, 110, "Web MIDI devices are listed below");
+
+  // Draw MIDI device list at top (initially will show "No devices found")
+  draw_midi_devices(20, 140);
 
   // Draw grid
   draw_grid(50, "#e0e0e0");
 
-  // Draw coordinate axes
-  draw_coordinate_axes(400, 300);
+  // Draw coordinate axes (moved down to make room for MIDI devices)
+  draw_coordinate_axes(400, 450);
 
   // Draw function graph
-  draw_function_graph(400, 300, 50);
+  draw_function_graph(400, 450, 50);
 
-  // Draw bar chart
+  // Draw bar chart (moved down)
   int bar_values[] = {120, 80, 150, 90, 110, 130};
-  draw_bar_chart(bar_values, 6, 50, 550, 40);
+  draw_bar_chart(bar_values, 6, 50, 700, 40);
 
   // Draw pie chart
   int pie_values[] = {30, 20, 25, 15, 10};
-  draw_pie_chart(pie_values, 5, 650, 150, 80);
+  draw_pie_chart(pie_values, 5, 650, 200, 80);
 
   printf("Drawing complete!\n");
+  printf("Waiting for MIDI devices to be enumerated...\n");
 
   return 0;
 }

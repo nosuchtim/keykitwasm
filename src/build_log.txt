@@ -2,3 +2,4 @@
 
 
 === STDERR ===
+emcc: warning: running limited binaryen optimizations because DWARF info requested (or indirectly required) [-Wlimited-postlink-optimizations]

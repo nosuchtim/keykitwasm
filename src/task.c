@@ -694,6 +694,8 @@ loadsym(Symbolp s,int pushit)
 	int nerrs;
 	Datum d;
 
+	eprint("loadsym: Loading symbol '%s'\n",symname(s));
+
 #ifdef TRYTHISEVENTUALLY
 	clearsym(s);
 	*symdataptr(s) = Noval;
@@ -2387,7 +2389,9 @@ inittasks(void)
 		Tasktable = newht( p ? atoi(p) : 67 );
 	}
 
+	mdep_popup("TJT DEBUG inittasks A\n");
 	Ireboot = instructs("Rebootfunc();");
+	mdep_popup("TJT DEBUG inittasks B\n");
 
 	pushiseg();
 	code(funcinst(I_POPVAL));

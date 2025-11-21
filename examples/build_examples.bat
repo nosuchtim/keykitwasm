@@ -15,7 +15,8 @@ call %EMCC% canvas_drawing_example.c -o canvas_drawing_example.html ^
     -s EXPORTED_RUNTIME_METHODS="['ccall','cwrap','UTF8ToString','getValue','setValue']" ^
     --shell-file canvas_shell.html ^
     -lm ^
-    -O2
+    -g ^
+    -O0
 
 if %ERRORLEVEL% EQU 0 (
     echo ✓ Simple example built successfully!
@@ -31,11 +32,12 @@ echo [2/2] Building advanced canvas example...
 call %EMCC% advanced_canvas_example.c -o advanced_canvas_example.html ^
     --js-library canvas_library.js ^
     -s ALLOW_MEMORY_GROWTH=1 ^
-    -s EXPORTED_FUNCTIONS="['_main','_update_animation','_on_mouse_event']" ^
+    -s EXPORTED_FUNCTIONS="['_main','_update_animation','_on_mouse_event','_on_midi_ready','_on_midi_message']" ^
     -s EXPORTED_RUNTIME_METHODS="['ccall','cwrap']" ^
     --shell-file canvas_shell.html ^
     -lm ^
-    -O2
+    -g ^
+    -O0
 
 if %ERRORLEVEL% EQU 0 (
     echo ✓ Advanced example built successfully!

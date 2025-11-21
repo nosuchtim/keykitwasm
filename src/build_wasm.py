@@ -32,17 +32,29 @@ def compile_wasm():
         emcc,  # Use the found emcc path
         "-I.",
         "-o", output,
+        "--js-library", "keykit_library.js",  # Include JavaScript library
+        "--shell-file", "keykit_shell.html",  # Custom HTML shell
         "-s", "ALLOW_MEMORY_GROWTH=1",
         "-s", "ASYNCIFY=1",  # Important for blocking calls
-        "-s", "EXPORTED_FUNCTIONS=['_main']",
-        "-s", "EXPORTED_RUNTIME_METHODS=['ccall','cwrap']",
+        "-s", "FORCE_FILESYSTEM=1",  # Enable virtual filesystem
+        "-s", "EXPORTED_FUNCTIONS=['_main','_mdep_on_midi_ready','_mdep_on_midi_message','_mdep_on_mouse_move','_mdep_on_mouse_button','_mdep_on_key_event']",
+        "-s", "EXPORTED_RUNTIME_METHODS=['ccall','cwrap','getValue','setValue','UTF8ToString','FS']",
         "-D__EMSCRIPTEN__",
         "-Wno-implicit-function-declaration",
         "-Wno-int-conversion",
         "-Wno-incompatible-pointer-types",
         "-Wno-return-type",
-        "-O2"  # Optimization level
+        "-lm",  # Link math library
+        "-g",   # Debug symbols
+        "-O0"   # No optimization for easier debugging (change to -O2 for production)
     ]
+
+    # Optional: Preload files if lib directory exists
+    # Uncomment these lines if you have a lib directory to package
+    # if os.path.exists("../lib"):
+    #     flags.extend(["--preload-file", "../lib@/keykit/lib"])
+    # if os.path.exists("../music"):
+    #     flags.extend(["--preload-file", "../music@/keykit/music"])
     
     cmd = flags + src_files
     

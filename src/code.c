@@ -792,20 +792,21 @@ callfuncd(Symbolp s)
 		/* the current symbol value (if s is given) to see if its value */
 		/* has been updated. */
 		if ( isnoval(funcd) ) {
-			if ( s )
+			if ( s ) {
 				funcd = *symdataptr(s);
+			}
 			if ( isnoval(funcd) ) {
 				char *sn = symname(s);
-				sprintf(Msg1,"Attempt to call an undefined function");
 				if ( s != NULL )
 					sprintf(strend(Msg1)," named '%s'",sn);
 				if ( strcmp(sn,"keyrc") == 0 ) {
-					mdep_popup("Fatal error: couldn't find keyrc!\nYou should cd to the bin directory,\nor add the bin directory to your PATH");
+					mdep_popup("Fatal error: couldn't find keyrc!\n");
 				}
 				execerror(Msg1);
 			}
 		}
 		if ( funcd.type != D_CODEP )
+
 			execerror("Expected function value, got %s",atypestr(funcd.type));
 	}
 
@@ -915,7 +916,8 @@ callfuncd(Symbolp s)
 
 	if ( *Linetrace > 1 ) {
 		char *ipf = ipfuncname(funcd.u.codep);
-		eprint("Calling function: %s  Pc=%lld\n",ipf==NULL?"(NULL?)":ipf, (intptr_t)T->pc);
+		sprintf(Msg1,"Calling function: %s\n", ipf==NULL?"(NULL?)":ipf);
+		mdep_popup(Msg1);
 	}
 
 	if ( bi != 0 ) {

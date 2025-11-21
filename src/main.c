@@ -87,6 +87,8 @@ keystart(void)
 {
 	register char *p;
 
+	mdep_popup("keystart: Initializing KeyKit...\n");
+
 	/* these are dynamically allocated to avoid using global static */
 	/* memory, which some compilers limit to 64 K */
 
@@ -143,6 +145,9 @@ keyfile(char *fname,int flag)
 {
 	FILE *f;
 	Codep cp, cp2;
+
+	sprintf(Msg1,"keyfile: Reading keyfile %s",fname);
+	mdep_popup(Msg1);
 
 	OPENTEXTFILE(f,fname,"r");
 	if ( f == NULL ) {
@@ -1135,6 +1140,9 @@ loadkeylibk(void)
 	static char *lastkeypath = NULL;
 	static char *pathfname = NULL;	/* result is kept here */
 
+	sprintf(Msg1,"TJT DEBUG loadkeylibk Keypath=%s\n",*Keypath);
+	mdep_popup(Msg1);
+
 	(void) pathsearch("keylib.k",&pathsize,&pathparts,
 			&lastkeypath,&pathfname,Keypath,load1keylib);
 }
@@ -1424,6 +1432,7 @@ scantill(char *lookfor,char *buff,char *pend)
 void
 readkeylibs(void)
 {
+	mdep_popup("TJT DEBUG readkeylibs\n");
 	if ( Keylibtable == NULL ) {
 		char *p = getenv("KEYLIBHASHSIZE");
 		Keylibtable = newht ( p ? atoi(p) : 251 );
@@ -1582,15 +1591,18 @@ pathsearch(char *fname,long *apathsize,char ***apathparts,Symstrp alastkeypath,c
 			mdep_popup("mdep_makepath fails?");
 			continue;
 		}
+
 		if ( pfunc == NULL ) {
-			if ( exists(*apathfname) )
+			if ( exists(*apathfname) ) {
 				return(*apathfname);
+			}
 		}
 		else {
 			/* Note that pfunc gets called for ALL found files, */
 			/* it doesn't abort after finding the first one. */
-			if ( exists(*apathfname) )
+			if ( exists(*apathfname) ) {
 				(*pfunc)(kp,*apathfname);
+			}
 		}
 	}
 	return(NULL);

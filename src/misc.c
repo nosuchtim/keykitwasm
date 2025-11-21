@@ -11,6 +11,10 @@
 
 #include "key.h"
 
+#ifdef __EMSCRIPTEN__
+#include <unistd.h>
+#endif
+
 void (*Fatalfunc)(char *) = 0;
 void (*Diagfunc)(char *) = 0;
 #if 0
@@ -23,6 +27,14 @@ extern long *Debugmalloc;
 int
 exists(char *fname)
 {
+#ifdef __EMSCRIPTEN__
+	/* Use access() for Emscripten virtual filesystem - more efficient than fopen */
+	if ( fname==NULL || *fname=='\0' ) {
+		return 0;
+	}
+	int r = (access(fname, F_OK) == 0) ? 1 : 0;
+	return r;
+#else
 	FILE *f;
 
 	/* MS C++ fopen() crashes if you give it a "" value? */
@@ -39,6 +51,7 @@ exists(char *fname)
 		return(1);
 	}
 	return(0);
+#endif
 }
 
 void

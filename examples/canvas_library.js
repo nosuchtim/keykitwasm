@@ -157,5 +157,125 @@ mergeInto(LibraryManager.library, {
         if (!canvas) return;
         var ctx = canvas.getContext('2d');
         ctx.globalCompositeOperation = UTF8ToString(operation);
+    },
+
+    // ========== Web MIDI API Functions ==========
+
+    // Global MIDI access object
+    js_request_midi_access__deps: ['$stringToUTF8'],
+    js_request_midi_access: function () {
+        if (!window.midiAccess) {
+            window.midiInputs = [];
+            window.midiOutputs = [];
+
+            if (navigator.requestMIDIAccess) {
+                console.log('Requesting MIDI access...');
+                navigator.requestMIDIAccess({ sysex: false })
+                    .then(function(access) {
+                        console.log('MIDI access granted!');
+                        window.midiAccess = access;
+
+                        // Store inputs and outputs as arrays
+                        window.midiInputs = Array.from(access.inputs.values());
+                        window.midiOutputs = Array.from(access.outputs.values());
+
+                        console.log('Found ' + window.midiInputs.length + ' MIDI inputs');
+                        console.log('Found ' + window.midiOutputs.length + ' MIDI outputs');
+
+                        // Log device names
+                        window.midiInputs.forEach(function(input, index) {
+                            console.log('  Input ' + index + ': ' + input.name);
+                        });
+                        window.midiOutputs.forEach(function(output, index) {
+                            console.log('  Output ' + index + ': ' + output.name);
+                        });
+
+                        // Call back into C code to redraw MIDI devices
+                        if (typeof Module !== 'undefined' && Module.ccall) {
+                            Module.ccall('on_midi_ready', null, [], []);
+                        }
+                    })
+                    .catch(function(err) {
+                        console.error('MIDI access denied or error:', err);
+                        window.midiInputs = [];
+                        window.midiOutputs = [];
+                    });
+            } else {
+                console.warn('Web MIDI API not supported in this browser');
+                window.midiInputs = [];
+                window.midiOutputs = [];
+            }
+        }
+    },
+
+    // Get number of MIDI input devices
+    js_get_midi_input_count: function () {
+        if (!window.midiInputs) {
+            return 0;
+        }
+        return window.midiInputs.length;
+    },
+
+    // Get number of MIDI output devices
+    js_get_midi_output_count: function () {
+        if (!window.midiOutputs) {
+            return 0;
+        }
+        return window.midiOutputs.length;
+    },
+
+    // Get MIDI input device name
+    js_get_midi_input_name__deps: ['$stringToUTF8'],
+    js_get_midi_input_name: function (index, buffer, buffer_size) {
+        if (!window.midiInputs || index < 0 || index >= window.midiInputs.length) {
+            stringToUTF8('Unknown', buffer, buffer_size);
+            return;
+        }
+        var device = window.midiInputs[index];
+        var name = device.name || 'MIDI Input ' + index;
+        stringToUTF8(name, buffer, buffer_size);
+    },
+
+    // Get MIDI output device name
+    js_get_midi_output_name__deps: ['$stringToUTF8'],
+    js_get_midi_output_name: function (index, buffer, buffer_size) {
+        if (!window.midiOutputs || index < 0 || index >= window.midiOutputs.length) {
+            stringToUTF8('Unknown', buffer, buffer_size);
+            return;
+        }
+        var device = window.midiOutputs[index];
+        var name = device.name || 'MIDI Output ' + index;
+        stringToUTF8(name, buffer, buffer_size);
+    },
+
+    // Open all MIDI input devices and set up message listeners
+    js_open_midi_inputs: function () {
+        if (!window.midiInputs || window.midiInputs.length === 0) {
+            console.log('No MIDI input devices to open');
+            return;
+        }
+
+        console.log('Opening ' + window.midiInputs.length + ' MIDI input devices...');
+
+        window.midiInputs.forEach(function(input, index) {
+            // Set up message handler
+            input.onmidimessage = function(event) {
+                var data = event.data;
+                var status = data[0];
+                var data1 = data.length > 1 ? data[1] : 0;
+                var data2 = data.length > 2 ? data[2] : 0;
+
+                // Call back into C code with device index and MIDI data
+                if (typeof Module !== 'undefined' && Module.ccall) {
+                    Module.ccall('on_midi_message', null,
+                                 ['number', 'number', 'number', 'number'],
+                                 [index, status, data1, data2]);
+                }
+            };
+
+            console.log('  Opened MIDI input: ' + input.name);
+        });
+
+        console.log('All MIDI inputs opened and listening for messages');
     }
 });
