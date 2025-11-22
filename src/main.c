@@ -1841,10 +1841,12 @@ MAIN(int argc,char **argv)
 				do_rc = 0;
 			}
 			mdep_popup("TJT DEBUG before exectasks()");	
+			mdep_popup("TJT DEBUG DISABLED exectasks()");
 			exectasks(0);
 			mdep_popup("TJT DEBUG after exectasks()");	
 			Consolefd = -1;
 
+			mdep_popup("TJT DEBUG Setting AA go_interactive=0");
 			go_interactive = 0;
 			continue;
 		}
@@ -1863,6 +1865,7 @@ MAIN(int argc,char **argv)
 			keystr(arg);
 
 			exectasks(0);
+			mdep_popup("TJT DEBUG Setting BB go_interactive=0");
 			go_interactive = 0;
 			nerrs += Errors;
 			continue;
@@ -1881,16 +1884,25 @@ MAIN(int argc,char **argv)
 			go_interactive = 1;
 			continue;
 		}
+		mdep_popup("TJT DEBUG Setting CC go_interactive=0");
 		go_interactive = 0;
 		keyfile(arg,FLAGERROR);
 		exectasks(0);
 	}
 	mdep_popup("TJT DEBUG before interactive");
+	sprintf(Msg1,"TJT DEBUG after argc loop go_interactive=%d do_rc=%d",go_interactive,do_rc);
+	mdep_popup(Msg1);
 	if ( go_interactive ) {
+		mdep_popup("INTERACTIVE!");
 		Consolefd = realConsolefd;
-		if ( do_rc )
+		sprintf(Msg1,"TJT DEBUG Consolefd=%d realConsolefd=%d",Consolefd,realConsolefd);
+		if ( do_rc ) {
+			mdep_popup("TJT DEBUG before keystr keyrc");
 			keystr("keyrc();");
-		exectasks(0);
+		}
+		mdep_popup("TJT DEBUG before exectasks");
+		mdep_popup("TJT DEBUG DISABLED exectasks()");
+		// exectasks(0);
 		Consolefd = -1;
 	}
 	mdep_popup("TJT DEBUG after interactive");

@@ -582,6 +582,7 @@ exectasks(int nosetjmp)
 	int wn, b;
 	long tmout, ccnt, thcnt;
 
+	mdep_popup("TJT DEBUG exectasks begin ===================\n");
 #ifdef PYTHON
 	Py_BEGIN_ALLOW_THREADS
 
@@ -596,12 +597,14 @@ exectasks(int nosetjmp)
 	// 	setjmp(Begin);
 	// }
 
+	// mdep_popup("TJT DEBUG entering exectasks");
 	setintcatch();
 
 	thcnt = ccnt = 0;
 	int nbytenames = sizeof(Bytenames)/sizeof(Bytenames[0]);
 
 	for ( ;; ) {
+		// mdep_popup("TJT DEBUG exectasks loop top");
 
 		/* The value of Throttle controls how many instructions */
 		/* will be interpreted per each check of realtime stuff. */
@@ -614,6 +617,7 @@ exectasks(int nosetjmp)
 			goto runit;
 		}
 
+		// mdep_popup("TJT DEBUG exectasks loop AA");
 		if ( Running != NULL )
 			tmout = 0;
 		else {
@@ -631,7 +635,13 @@ exectasks(int nosetjmp)
 			else
 				tmout = *Deftimeout;
 		}
+		if ( tmout == 0 ) {
+			tmout = 10;  // HACK for webasm development
+		}
+		// sprintf(Msg1,"TJT DEBUG exectasks before waitfor tmout=%ld",tmout);	
+		// mdep_popup(Msg1);
 		wn = mdep_waitfor((int)tmout);
+		// mdep_popup("TJT DEBUG exectasks after waitfor");
 
 		/* Handle MIDI I/O right away. */
 		chkoutput();
@@ -650,6 +660,7 @@ exectasks(int nosetjmp)
 
 	runit:
 
+		// mdep_popup("TJT DEBUG exectasks loop DD");
 		for ( T=Running; T!=NULL; T=T->nextrun ) {
 
 			if ( T->priority < Currpriority )
@@ -675,6 +686,7 @@ exectasks(int nosetjmp)
 			Chkstuff = 0;
 			ccnt = (int)*Checkcount;
 		}
+		// mdep_popup("TJT DEBUG exectasks loop EE");
 
 	}
 	T = NULL;

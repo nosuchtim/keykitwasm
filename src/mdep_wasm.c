@@ -151,7 +151,11 @@ mdep_makepath(char *dirname, char *filename, char *result, int resultsize)
 void
 mdep_popup(char *s)
 {
-    fprintf(stderr, "POPUP: %s\n", s);
+    fprintf(stderr, "POPUP: %s", s);
+    char *eol = s + strlen(s) - 1;
+    if ( *eol != '\n' ) {
+        fprintf(stderr, "\n");
+    }
 }
 
 void
@@ -227,6 +231,7 @@ static int midi_initialized = 0;
 EMSCRIPTEN_KEEPALIVE
 void mdep_on_midi_message(int device_index, int status, int data1, int data2)
 {
+	mdep_popup("TJT DEBUG mdep_on_midi_message callback!!!! ");
     // Add MIDI bytes to buffer
     if (midi_buffer_count + 3 <= MIDI_BUFFER_SIZE) {
         midi_input_buffer[midi_buffer_write_pos++] = (unsigned char)status;
@@ -249,6 +254,8 @@ void mdep_on_midi_message(int device_index, int status, int data1, int data2)
 EMSCRIPTEN_KEEPALIVE
 void mdep_on_mouse_move(int x, int y)
 {
+	sprintf(Msg1,"mdep_on_mouse_move callback!!!! x=%d y=%d\n", x, y);	
+	mdep_popup(Msg1);
     // Mouse move events are handled via polling in mdep_mouse()
     // This callback is optional and can be used for event-driven updates
 }
@@ -257,6 +264,8 @@ void mdep_on_mouse_move(int x, int y)
 EMSCRIPTEN_KEEPALIVE
 void mdep_on_mouse_button(int down, int x, int y, int buttons)
 {
+	sprintf(Msg1,"mdep_on_mouse_button callback!!!! down=%d x=%d y=%d buttons=%d\n", down, x, y, buttons);
+	mdep_popup(Msg1);
     // Mouse button events are handled via polling in mdep_mouse()
     // This callback is optional and can be used for event-driven updates
 }
@@ -265,6 +274,8 @@ void mdep_on_mouse_button(int down, int x, int y, int buttons)
 EMSCRIPTEN_KEEPALIVE
 void mdep_on_key_event(int down, int keycode)
 {
+	sprintf(Msg1,"mdep_on_key_event callback!!!! down=%d keycode=%d\n", down, keycode);
+	mdep_popup(Msg1);
     // Keyboard events are buffered by JavaScript and retrieved via mdep_getconsole()
     // This callback is optional and can be used for event-driven updates
 }
@@ -413,17 +424,469 @@ mdep_midi(int openclose, Midiport *p)
 Datum
 mdep_mdep(int argc)
 {
-    return numdatum(0);
+	char *args[3];
+	int n;
+	Datum d;
+
+	mdep_popup("===== MDEP_MDEP !!!!!!!!!!!!!!!!!\n");
+	d = Nullval;
+	/*
+	 * Things past the first 3 args might be integers
+	 */
+	for ( n=0; n<3 && n<argc; n++ ) {
+		Datum dd = ARG(n);
+		if ( dd.type == D_STR ) {
+			args[n] = needstr("mdep",dd);
+		} else {
+			args[n] = "";
+		}
+	}
+	for ( ; n<3; n++ )
+		args[n] = "";
+
+	/*
+	 * recognized commands are:
+	 *     tcpip localaddresses
+	 *     priority low/normal/high/realtime
+	 *     popen {cmd} "rt"
+	 *     popen {cmd} "wt" {string-to-write}
+	 */
+
+	if ( strcmp(args[0],"midi")==0 ) {
+		execerror("mdep(\"midi\",...) is no longer used.  Use midi(...).\n");
+	}
+	else if ( strcmp(args[0],"env") == 0 ) {
+		mdep_popup("===== mdep env !!!!  \n");
+	    if ( strcmp(args[1],"get")==0 ) {
+			mdep_popup("===== mdep env get\n");
+			char *s = getenv(args[2]);
+			sprintf(Msg2,"===== mdep env get got %s\n",s);
+			mdep_popup(Msg2);
+			if ( s != NULL ) {
+				d = strdatum(uniqstr(s));
+			} else {
+				d = strdatum(Nullstr);
+			}
+	    } else {
+		execerror("mdep(\"env\",... ) doesn't recognize %s\n",args[1]);
+	    }
+	}
+	else if ( strcmp(args[0],"video") == 0 ) {
+#if KEYCAPTURE
+	    if ( strcmp(args[1],"capture")==0 ) {
+		if ( strcmp(args[2],"stop") == 0 ) {
+			key_stop_capture();
+		} else if ( strcmp(args[2],"start") == 0 ) {
+			int gx;
+			int gy;
+			Datum d3 = ARG(3);
+			Datum d4 = ARG(4);
+
+			key_start_capture();
+			gx = roundval(d3);
+			gy = roundval(d4);
+			setvideogrid(gx,gy);
+		} else {
+			execerror("mdep(\"video\",\"capture\",...): %s not recognized\n",args[2]);
+		}
+
+	    } else if ( strcmp(args[1],"start")==0 ) {
+		int gx = 32;
+		int gy = 32;
+		if (!startvideo())
+			d = numdatum(0);
+		else
+			d = numdatum(1);
+
+	    } else if ( strcmp(args[1],"get")==0
+			&& *args[3] != 0 && *args[4] != 0 ) {
+
+			Datum d3 = ARG(3);
+			Datum d4 = ARG(4);
+			int gx = roundval(d3);
+			int gy = roundval(d4);
+			int v;
+			int offset = gy * GridXsize + gx;
+
+			args[2] = needstr("mdep",ARG(2));
+
+			if ( strcmp(args[2],"red")==0 )
+				v = GridRedAvg[offset];
+			else if ( strcmp(args[2],"green")==0 )
+				v = GridGreenAvg[offset];
+			else if ( strcmp(args[2],"blue")==0 )
+				v = GridBlueAvg[offset];
+			else if ( strcmp(args[2],"grey")==0 )
+				v = GridGreyAvg[offset];
+			else
+				execerror("mdep(\"video\",\"get\",...): %s is unrecognized\n",args[2]);
+			d = numdatum(v);
+
+	    } else if ( strcmp(args[1],"getaverage")==0 ) {
+
+			int gx, gy;
+			long redtot = 0;
+			long greentot = 0;
+			long bluetot = 0;
+			long greytot = 0;
+			int redavg, greenavg, blueavg, greyavg;
+			int nxy = GridXsize * GridYsize;
+
+			for ( gx=0; gx<GridXsize; gx++ ) {
+				for ( gy=0; gy<GridYsize; gy++ ) {
+					int offset = gy * GridXsize + gx;
+					int rv = GridRedAvgPrev[offset];
+					int gv = GridGreenAvgPrev[offset];
+					int bv = GridBlueAvgPrev[offset];
+					redtot += rv;
+					greentot += gv;
+					bluetot += bv;
+					greytot += (rv+gv+bv);
+				}
+			}
+			redavg = redtot / nxy;
+			greenavg = greentot / nxy;
+			blueavg = bluetot / nxy;
+			greyavg = greytot / nxy;
+
+			d = newarrdatum(0,3);
+			setarraydata(d.u.arr,
+				Str_red,numdatum(redavg));
+			setarraydata(d.u.arr,
+				Str_green,numdatum(greenavg));
+			setarraydata(d.u.arr,
+				Str_blue,numdatum(blueavg));
+			setarraydata(d.u.arr,
+				Str_grey,numdatum(greyavg));
+
+	    } else if ( strcmp(args[1],"getchange")==0
+			&& *args[3] != 0 && *args[4] != 0 ) {
+
+			Datum d3 = ARG(3);
+			Datum d4 = ARG(4);
+			int gx = roundval(d3);
+			int gy = roundval(d4);
+			int v;
+			int dv;
+			int offset = gy * GridXsize + gx;
+
+			args[2] = needstr("mdep",ARG(2));
+
+			if ( strcmp(args[2],"red")==0 ) {
+				v = GridRedAvg[offset];
+				dv = v - GridRedAvgPrev[offset];
+				GridRedAvgPrev[offset] = v;
+			} else if ( strcmp(args[2],"green")==0 ) {
+				v = GridGreenAvg[offset];
+				dv = v - GridGreenAvgPrev[offset];
+				GridGreenAvgPrev[offset] = v;
+			} else if ( strcmp(args[2],"blue")==0 ) {
+				v = GridBlueAvg[offset];
+				dv = v - GridBlueAvgPrev[offset];
+				GridBlueAvgPrev[offset] = v;
+			} else if ( strcmp(args[2],"grey")==0 ) {
+				v = GridGreyAvg[offset];
+				dv = v - GridGreyAvgPrev[offset];
+				GridGreyAvgPrev[offset] = v;
+			} else
+				execerror("mdep(\"video\",\"get\",...): %s is unrecognized\n",args[2]);
+			if ( dv == v )
+				dv = 0;
+			d = numdatum(dv);
+
+	    } else {
+		eprint("Error: unrecognized video argument - %s\n",args[1]);
+	    }
+#else
+	    execerror("mdep(\"video\",...): keykit not compiled with video support\n");
+#endif
+	}
+	else if ( strcmp(args[0],"gesture") == 0 ) {
+	    execerror("mdep(\"gesture\",...): keykit not compiled with igesture support\n");
+	}
+	else if ( strcmp(args[0],"lcd") == 0 ) {
+	    execerror("mdep(\"lcd\",...): keykit not compiled with lcd support\n");
+	}
+#if KEYDISPLAY
+	else if ( strcmp(args[0],"display") == 0 ) {
+
+	    if ( strcmp(args[1],"start")==0 ) {
+		int gx = 32;
+		int gy = 32;
+		int width = neednum("Expecting integer width",ARG(2));
+		int height = neednum("Expecting integer height",ARG(3));
+		int noborder = 0;
+		char *nbp = "xxx";
+
+		if ( argc < 4 )
+			execerror("mdep(\"display\",\"start\",...) needs at least 4 args\n");
+		if ( argc > 4 ) {
+			nbp = needstr("mdep display",ARG(4));
+			noborder = (strcmp(nbp,"noborder")==0);
+		}
+		if (!startdisplay(noborder,width,height))
+			d = numdatum(0);
+		else
+			d = numdatum(1);
+
+	    }
+	}
+#endif
+	else if ( strcmp(args[0],"osc") == 0 ) {
+        eprint("mdep(osc,...) not implemented in WebAssembly build.\n");
+        /*
+	    if ( strcmp(args[1],"send")==0 ) {
+		char buff[512];
+		int buffsize = sizeof(buff);
+		int sofar = 0;
+		char *tp;
+		int fnum = neednum("Expecting fifo number ",ARG(2));
+		Fifo *fptr;
+		Datum d3;
+
+		fptr = fifoptr(fnum);
+		if ( fptr == NULL )
+			execerror("No fifo numbered %d!?",fnum);
+
+		d3 = ARG(3);
+		if ( d3.type == D_ARR ) {
+			Htablep arr = d3.u.arr;
+			int cnt = 0;
+			Symbolp s;
+			int asize;
+			Datum dd;
+			char types[64];
+
+			// First one is the message (e.g. "/foo")
+			s = arraysym(arr,numdatum(0),H_LOOK);
+			if ( s == NULL )
+				execerror("First element of array not found?");
+			dd = *symdataptr(s);
+			if ( dd.type != D_STR )
+				execerror("First element of array must be string");
+			osc_pack_str(buff,buffsize,&sofar,dd.u.str);
+			tp = types;
+			*tp++ = ',';
+			cnt = 1;
+			asize = arrsize(arr);
+			for ( n=1; n<asize; n++ ) {
+				s = arraysym(arr,numdatum(n),H_LOOK);
+				dd = *symdataptr(s);
+				switch(dd.type){
+				case D_NUM:
+					*tp++ = 'i';
+					break;
+				case D_STR:
+					*tp++ = 's';
+					break;
+				case D_DBL:
+					*tp++ = 'f';
+					break;
+				default:
+					execerror("Can't handle type %s!",atypestr(d.type));
+				}
+				cnt++;
+			}
+			*tp = '\0';
+			osc_pack_str(buff,buffsize,&sofar,types);
+			for ( n=1; n<asize; n++ ) {
+				s = arraysym(arr,numdatum(n),H_LOOK);
+				dd = *symdataptr(s);
+				switch(dd.type){
+				case D_NUM:
+					osc_pack_int(buff,buffsize,&sofar,dd.u.val);
+					break;
+				case D_STR:
+					osc_pack_str(buff,buffsize,&sofar,dd.u.str);
+					break;
+				case D_DBL:
+					osc_pack_dbl(buff,buffsize,&sofar,dd.u.dbl);
+					break;
+				default:
+					execerror("Can't handle type %s!",atypestr(d.type));
+				}
+			}
+		} else {
+			for ( n=3; n<argc; n++ ) {
+				d = ARG(n);
+				if ( d.type == D_STR ) {
+					char *s = d.u.str;
+					int c;
+					while ( (c=*s++) != '\0' ) {
+						buff[sofar++] = c;
+					}
+				} else if ( d.type == D_NUM ) {
+					buff[sofar++] = (char)(numval(d));
+				} else {
+					execerror("Bad type of data given to osc send.");
+					
+				}
+			}
+		}
+		
+		udp_send(fptr->port,buff,sofar);
+		d = numdatum(0);
+	    }
+        */
+	}
+	else if ( strcmp(args[0],"tcpip")==0 ) {
+        eprint("mdep(tcpip,...) not implemented in WebAssembly build.\n");
+        /*
+	    if ( strcmp(args[1],"localaddresses")==0 ) {
+			char *p;
+			d = newarrdatum(0,3);
+			p = mdep_localaddresses(d);
+			if ( p )
+				eprint("Error: %s\n",p);
+		}
+        */
+	}
+	else if ( strcmp(args[0],"clipboard")==0 ) {
+        eprint("mdep(clipboard,...) not implemented in WebAssembly build.\n");
+        /*
+		if ( strcmp(args[1],"get")==0 ) {
+			char *s = mdep_getclipboard();
+			if ( s != NULL ) {
+				d = strdatum(uniqstr(s));
+			}
+		} else if ( strcmp(args[1],"set")==0 ) {
+			if ( mdep_setclipboard(args[2]) != 0 ) {
+				d = numdatum(0);
+			}
+		} else {
+			eprint("Error: unrecognized clipboard argument - %s\n",args[1]);
+		}
+        */
+	}
+	else if ( strcmp(args[0],"sendinput")==0 ) {
+        eprint("mdep(sendinput,...) not implemented in WebAssembly build.\n");
+        /*
+		struct tagINPUT in;
+		if ( strcmp(args[1],"keyboard")==0 ) {
+			int r;
+			int vk = neednum("Expecting integer keycode",ARG(2));
+			int up = neednum("Expecting up/down value",ARG(3));
+			in.type = INPUT_KEYBOARD;
+			in.ki.wVk = vk;
+			in.ki.wScan = 0;
+			if ( up )
+				in.ki.dwFlags = KEYEVENTF_KEYUP;
+			else
+				in.ki.dwFlags = 0;
+			in.ki.time = 0;
+			in.ki.dwExtraInfo = 0;
+			r = SendInput(1,&in,sizeof(INPUT));
+			d = numdatum(r);
+		} else if ( strcmp(args[1],"mouse")==0 ) {
+			eprint("Error: sendinput of mouse not implemented yet\n");
+		} else {
+			eprint("Error: unrecognized sendinput argument - %s\n",args[1]);
+		}
+        */
+	}
+	else if ( strcmp(args[0],"joystick")==0 ) {
+        eprint("mdep(joystick,...) not implemented in WebAssembly build.\n");
+        /*
+		if ( strcmp(args[1],"init")==0 ) {
+			Datum joyinit(int);
+			int millipoll = 10;	// default is 10 milliseconds
+
+			if ( *args[2] != 0 )
+				millipoll = atoi(args[2]);
+			if ( millipoll < 1 )
+				millipoll = 1;
+			d = joyinit(millipoll);
+
+		} else if ( strcmp(args[1],"release")==0 ) {
+			void joyrelease();
+			joyrelease();
+		} else {
+			eprint("Error: unrecognized joystick argument - %s\n",args[1]);
+		}
+        */
+	} else if ( strcmp(args[0],"priority")==0 ) {
+        eprint("mdep(priority,...) not implemented in WebAssembly build.\n");
+        /*
+		BOOL n = FALSE;
+		long r = 0; 
+		HANDLE p = GetCurrentProcess();
+	    if ( strcmp(args[1],"realtime")==0 ) {
+			n = SetPriorityClass(p,REALTIME_PRIORITY_CLASS);
+		}
+	    else if ( strcmp(args[1],"normal")==0 ) {
+			n = SetPriorityClass(p,NORMAL_PRIORITY_CLASS);
+		}
+	    else if ( strcmp(args[1],"low")==0 ) {
+			n = SetPriorityClass(p,IDLE_PRIORITY_CLASS);
+		}
+	    else if ( strcmp(args[1],"high")==0 ) {
+			n = SetPriorityClass(p,HIGH_PRIORITY_CLASS);
+		}
+		else {
+			n = FALSE;
+			eprint("Error: unrecognized priority - %s\n",args[1]);
+		}
+		if ( n == FALSE ) {
+			r = GetLastError();
+			eprint("Error: getlasterror=%ld\n",r);
+		}
+		else
+			r = 0;
+		d = numdatum(r);
+        */
+	}
+	else if ( strcmp(args[0],"popen")==0 ) {
+        eprint("mdep(popen,...) not implemented in WebAssembly build.\n");
+        /*
+		FILE *f;
+		int buffsize;
+		char *p;
+		int c;
+
+		// * FOR SOME REASON, THIS CODE DOESN'T WORK.
+		// * I HAVE NO IDEA WHAT'S WRONG.  The _popen
+		// * always seems to return NULL.
+
+		f = _popen(args[1],args[2]);
+		if ( f == NULL ) {
+			tprint("popen returned NULL\n");
+			d = Nullval;
+		}
+		else {
+			if ( args[2][0] == 'w' ) {
+				char *ws = needstr("mdep",ARG(3));
+				fprintf(f,"%s",ws);
+				d = numdatum(0);
+			}
+			else {
+				// it's an 'r'
+				p = Msg2;
+				buffsize = 0;
+				while ( (c=getc(f)) >= 0 ) {
+					makeroom(++buffsize,&Msg2,&Msg2size);
+					*p++ = c;
+				}
+				*p = '\0';
+				d = strdatum(uniqstr(Msg2));
+			}
+			_pclose(f);
+		}
+        */
+	}
+	else {
+		/* unrecognized command */
+		eprint("Error: unrecognized mdep argument - %s\n",args[0]);
+	}
+	return d;
 }
 
 int
 mdep_waitfor(int millimsecs)
 {
-    // Simple sleep for now, but in browser main loop this might block
-    // Emscripten can handle sleep if using Asyncify, or we might need to change how the main loop works.
-    // For now, return K_TIMEOUT immediately or after sleep.
+    // Use emscripten_sleep() to properly yield to browser event loop
+    // This allows mouse/keyboard callbacks to be processed during the sleep
     if (millimsecs > 0)
-        usleep(millimsecs * 1000);
+        emscripten_sleep(millimsecs);
     return K_TIMEOUT;
 }
 

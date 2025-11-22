@@ -220,10 +220,12 @@ function portsopened() {
 }
 
 function lookforandopen(iotype,port,verbose) {
+	print("LOOKFORANDOPEN!\n")
 	if ( nargs() < 3 )
 		verbose = 1
 	arr = midi(iotype,"list")
 	if ( typeof(port) == "string" ) {
+		print("LOOKFORANDOPEN string\n")
 		found = lookforport(iotype,port)
 		if ( found < 0 ) {
 			if ( verbose ) {
@@ -233,6 +235,13 @@ function lookforandopen(iotype,port,verbose) {
 		}
 		port = found
 	}
+	print("LOOKFORANDOPEN checking isopen!\n")
+	print(port)
+	print("LOOKFORANDOPEN after printing port")
+	print(typeof(port))
+	print("LOOKFORANDOPEN after printing typeof")
+	print("Port =" + string(port))
+	print("iotype =" + string(iotype))
 	if ( midi(iotype,"isopen",port) ) {
 		if ( verbose )
 			print("Port is already open!  ("+iotype+" "+string(port)+", "+arr[port]+")")
@@ -243,8 +252,11 @@ function lookforandopen(iotype,port,verbose) {
 } 
 
 function lookforport(iotype,port) {
+	print("lookforport AA")
 	if ( typeof(port) == "string" ) {
+		print("lookforport calling midi list")
 		arr = midi(iotype,"list")
+		print("lookforport after midi list")
 		if ( substr(port,1,1) == "^" ) {
 			matchexpr = port + ".*"
 		} else {
