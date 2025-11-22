@@ -1319,9 +1319,9 @@ Pbitmap
 mdep_reallocbitmap(int xsize, int ysize, Pbitmap pb)
 {
     if (pb) {
-        sprintf(Msg1,"TJT DEBUG mdep_reallocbitmap to size (%d,%d)\n",
-            xsize, ysize);
-        mdep_popup(Msg1);
+        // sprintf(Msg1,"TJT DEBUG mdep_reallocbitmap to size (%d,%d)\n",
+        //     xsize, ysize);
+        // mdep_popup(Msg1);
 
         // If dimensions changed, reallocate buffer
         if (xsize != pb->origx || ysize != pb->origy) {
@@ -1349,9 +1349,9 @@ mdep_reallocbitmap(int xsize, int ysize, Pbitmap pb)
 void
 mdep_movebitmap(int fromx0, int fromy0, int width, int height, int tox0, int toy0)
 {
-    sprintf(Msg1,"TJT DEBUG mdep_movebitmap from (%d,%d) size (%d,%d) to (%d,%d)\n",
-        fromx0, fromy0, width, height, tox0, toy0);
-    mdep_popup(Msg1);
+    // sprintf(Msg1,"TJT DEBUG mdep_movebitmap from (%d,%d) size (%d,%d) to (%d,%d)\n",
+    //     fromx0, fromy0, width, height, tox0, toy0);
+    // mdep_popup(Msg1);
 
     // Copy a region of the canvas from one location to another
     js_copy_bitmap_region(fromx0, fromy0, width, height, tox0, toy0);
@@ -1360,9 +1360,9 @@ mdep_movebitmap(int fromx0, int fromy0, int width, int height, int tox0, int toy
 void
 mdep_pullbitmap(int x0, int y0, Pbitmap pb)
 {
-    sprintf(Msg1,"TJT DEBUG mdep_pullbitmap at (%d,%d) size (%d,%d)\n",
-        x0, y0, pb->xsize, pb->ysize);
-    mdep_popup(Msg1);
+    // sprintf(Msg1,"TJT DEBUG mdep_pullbitmap at (%d,%d) size (%d,%d)\n",
+    //     x0, y0, pb->xsize, pb->ysize);
+    // mdep_popup(Msg1);
 
     // Copy pixels from canvas to bitmap buffer
     if (pb && pb->ptr) {
@@ -1376,9 +1376,9 @@ mdep_pullbitmap(int x0, int y0, Pbitmap pb)
 void
 mdep_putbitmap(int x0, int y0, Pbitmap pb)
 {
-    sprintf(Msg1,"TJT DEBUG mdep_putbitmap at (%d,%d) size (%d,%d)\n",
-        x0, y0, pb->xsize, pb->ysize);
-    mdep_popup(Msg1);
+    // sprintf(Msg1,"TJT DEBUG mdep_putbitmap at (%d,%d) size (%d,%d)\n",
+    //     x0, y0, pb->xsize, pb->ysize);
+    // mdep_popup(Msg1);
 
     // Copy pixels from bitmap buffer to canvas
     if (pb && pb->ptr) {
