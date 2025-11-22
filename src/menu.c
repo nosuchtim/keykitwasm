@@ -70,7 +70,7 @@ menuconstruct(Kwind *w,int existing)
 	int nshow = shown(w);
 
 	/* Let MIDI I/O happen, since redrawing menus can take some time */
-	mdep_sync(); chkinput(); chkoutput(); mdep_sync();
+	mdep_sync(); chkmidiinput(); chkmidioutput(); mdep_sync();
 
 	x1 = x0 + w->km.width;
 	y1 = realy0 + w->km.height;
@@ -79,7 +79,7 @@ menuconstruct(Kwind *w,int existing)
 		my_plotmode(P_CLEAR);
 		mdep_boxfill(x0,y0,x1,y0+Menuysize-2);
 	}
-	mdep_sync(); chkinput(); chkoutput(); mdep_sync();
+	mdep_sync(); chkmidiinput(); chkmidioutput(); mdep_sync();
 	my_plotmode(P_STORE);
 	ny = y0;
 	if ( ! existing ) {
@@ -98,7 +98,7 @@ menuconstruct(Kwind *w,int existing)
 		if ( n >= (w->km.top + nshow) )
 			break;
 		if ( existing ) {
-			mdep_sync(); chkinput(); chkoutput(); mdep_sync();
+			mdep_sync(); chkmidiinput(); chkmidioutput(); mdep_sync();
 			my_plotmode(P_CLEAR);
 			mdep_boxfill(w->km.offset+x0+1, ny+(int)(*Menuymargin),
 				w->km.x+menuxarea(w)-6, ny+Menuysize-1);
@@ -127,7 +127,7 @@ menuconstruct(Kwind *w,int existing)
 /* sprintf(Msg1,"Menu bottom edge is %d,%d %d,%d\n",x0+1,y1+1,x1,y1+1);tprint(Msg1); */
 	}
 	if ( hasscrollbar(w) ) {
-		mdep_sync(); chkinput(); chkoutput(); mdep_sync();
+		mdep_sync(); chkmidiinput(); chkmidioutput(); mdep_sync();
 		if ( existing )
 			erasescrollbar(w);
 		scrollbar(w);

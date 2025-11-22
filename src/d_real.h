@@ -22,9 +22,9 @@ void addandput(int port, int n0, int chan, int c1,int c2)
 void chkrealoften(void)
 ;
 #endif
-void chkinput(void)
+void chkmidiinput(void)
 ;
-void chkoutput(void)
+void chkmidioutput(void)
 ;
 Unchar * ustrchr(Unchar *pn,int n)
 ;

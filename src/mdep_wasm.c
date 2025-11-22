@@ -219,6 +219,32 @@ static int midi_buffer_read_pos = 0;
 static int midi_buffer_write_pos = 0;
 static int midi_buffer_count = 0;
 
+// Keyboard input buffer for incoming keypresses
+#define KEYBOARD_BUFFER_SIZE 256
+static int keyboard_buffer[KEYBOARD_BUFFER_SIZE];
+static int keyboard_buffer_read_pos = 0;
+static int keyboard_buffer_write_pos = 0;
+static int keyboard_buffer_count = 0;
+
+// Mouse event buffer structure
+typedef struct {
+    int x;
+    int y;
+    int buttons;
+    int event_type;  // 0 = move, 1 = button down, 2 = button up
+} MouseEvent;
+
+#define MOUSE_BUFFER_SIZE 256
+static MouseEvent mouse_buffer[MOUSE_BUFFER_SIZE];
+static int mouse_buffer_read_pos = 0;
+static int mouse_buffer_write_pos = 0;
+static int mouse_buffer_count = 0;
+
+// Current mouse state (for polling)
+static int current_mouse_x = 0;
+static int current_mouse_y = 0;
+static int current_mouse_buttons = 0;
+
 // Storage for MIDI device names (allocated dynamically)
 #define MAX_MIDI_DEVICE_NAME 256
 static char midi_input_names[MIDI_IN_DEVICES][MAX_MIDI_DEVICE_NAME];
@@ -254,30 +280,87 @@ void mdep_on_midi_message(int device_index, int status, int data1, int data2)
 EMSCRIPTEN_KEEPALIVE
 void mdep_on_mouse_move(int x, int y)
 {
-	sprintf(Msg1,"mdep_on_mouse_move callback!!!! x=%d y=%d\n", x, y);	
-	mdep_popup(Msg1);
-    // Mouse move events are handled via polling in mdep_mouse()
-    // This callback is optional and can be used for event-driven updates
+    // Update current mouse position
+    current_mouse_x = x;
+    current_mouse_y = y;
+
+    // Buffer the mouse move event
+    if (mouse_buffer_count < MOUSE_BUFFER_SIZE) {
+        mouse_buffer[mouse_buffer_write_pos].x = x;
+        mouse_buffer[mouse_buffer_write_pos].y = y;
+        mouse_buffer[mouse_buffer_write_pos].buttons = current_mouse_buttons;
+        mouse_buffer[mouse_buffer_write_pos].event_type = 0; // move
+        mouse_buffer_write_pos++;
+        if (mouse_buffer_write_pos >= MOUSE_BUFFER_SIZE)
+            mouse_buffer_write_pos = 0;
+        mouse_buffer_count++;
+    }
 }
 
 // Callback from JavaScript for mouse button events
 EMSCRIPTEN_KEEPALIVE
 void mdep_on_mouse_button(int down, int x, int y, int buttons)
 {
-	sprintf(Msg1,"mdep_on_mouse_button callback!!!! down=%d x=%d y=%d buttons=%d\n", down, x, y, buttons);
-	mdep_popup(Msg1);
-    // Mouse button events are handled via polling in mdep_mouse()
-    // This callback is optional and can be used for event-driven updates
+    // Update current mouse state
+    current_mouse_x = x;
+    current_mouse_y = y;
+    current_mouse_buttons = buttons;
+
+    // Buffer the mouse button event
+    if (mouse_buffer_count < MOUSE_BUFFER_SIZE) {
+        mouse_buffer[mouse_buffer_write_pos].x = x;
+        mouse_buffer[mouse_buffer_write_pos].y = y;
+        mouse_buffer[mouse_buffer_write_pos].buttons = buttons;
+        mouse_buffer[mouse_buffer_write_pos].event_type = down ? 1 : 2; // 1 = button down, 2 = button up
+        mouse_buffer_write_pos++;
+        if (mouse_buffer_write_pos >= MOUSE_BUFFER_SIZE)
+            mouse_buffer_write_pos = 0;
+        mouse_buffer_count++;
+    } else {
+        printf("Warning: mouse buffer full, dropping event\n");
+    }
 }
 
 // Callback from JavaScript for keyboard events
 EMSCRIPTEN_KEEPALIVE
 void mdep_on_key_event(int down, int keycode)
 {
-	sprintf(Msg1,"mdep_on_key_event callback!!!! down=%d keycode=%d\n", down, keycode);
-	mdep_popup(Msg1);
-    // Keyboard events are buffered by JavaScript and retrieved via mdep_getconsole()
-    // This callback is optional and can be used for event-driven updates
+    // Only buffer key down events
+    if (down == 1) {
+        if (keyboard_buffer_count < KEYBOARD_BUFFER_SIZE) {
+            keyboard_buffer[keyboard_buffer_write_pos++] = keycode;
+            if (keyboard_buffer_write_pos >= KEYBOARD_BUFFER_SIZE)
+                keyboard_buffer_write_pos = 0;
+            keyboard_buffer_count++;
+        } else {
+            printf("Warning: keyboard buffer full, dropping keycode %d\n", keycode);
+        }
+    }
+}
+
+int mdep_get_mouse_event(int *x, int *y, int *buttons, int *event_type)
+{
+    if (mouse_buffer_count > 0) {
+        MouseEvent *event = &mouse_buffer[mouse_buffer_read_pos];
+        *x = event->x;
+        *y = event->y;
+        *buttons = event->buttons;
+        *event_type = event->event_type;
+
+        mouse_buffer_read_pos++;
+        if (mouse_buffer_read_pos >= MOUSE_BUFFER_SIZE)
+            mouse_buffer_read_pos = 0;
+        mouse_buffer_count--;
+        return 1; // Event retrieved
+    }
+    return 0; // No events available
+}
+
+void mdep_clear_mouse_events(void)
+{
+    mouse_buffer_read_pos = 0;
+    mouse_buffer_write_pos = 0;
+    mouse_buffer_count = 0;
 }
 
 int
@@ -885,8 +968,12 @@ mdep_waitfor(int millimsecs)
 {
     // Use emscripten_sleep() to properly yield to browser event loop
     // This allows mouse/keyboard callbacks to be processed during the sleep
-    if (millimsecs > 0)
+    if (millimsecs > 0) {
         emscripten_sleep(millimsecs);
+	}
+	if ( mdep_statconsole() ) {
+		return K_CONSOLE;
+	}
     return K_TIMEOUT;
 }
 
@@ -899,15 +986,22 @@ mdep_getportdata(PORTHANDLE *port, char *buff, int max, Datum *data)
 int
 mdep_getconsole(void)
 {
-    // Get keyboard input from JavaScript buffer
-    return js_get_key();
+    // Return next keycode from buffer, or -1 if empty
+    if (keyboard_buffer_count > 0) {
+        int keycode = keyboard_buffer[keyboard_buffer_read_pos++];
+        if (keyboard_buffer_read_pos >= KEYBOARD_BUFFER_SIZE)
+            keyboard_buffer_read_pos = 0;
+        keyboard_buffer_count--;
+        return keycode;
+    }
+    return -1;  // No key available
 }
 
 int
 mdep_statconsole()
 {
-    // Check if keyboard input is available
-    return js_has_key() ? 1 : 0;
+    // Check if keyboard input is available in buffer
+    return keyboard_buffer_count > 0 ? 1 : 0;
 }
 
 // Graphics and windowing functions
@@ -1080,6 +1174,7 @@ mdep_startgraphics(int argc, char **argv)
 
     printf("Canvas initialized: %dx%d\n", canvas_width, canvas_height);
 
+	/*
     // Draw a filled red square in the middle of the canvas as a test
     int size = 100;
     int x = (canvas_width - size) / 2;
@@ -1087,6 +1182,7 @@ mdep_startgraphics(int argc, char **argv)
     js_set_fill_color("red");
     js_fill_rect(x, y, size, size);
     printf("Drew red square at (%d, %d) size %d\n", x, y, size);
+	*/
 
     return 0;
 }
@@ -1095,7 +1191,6 @@ void
 mdep_startrealtime(void)
 {
     // Start realtime mode - request MIDI access
-    mdep_popup("TJT DEBUG Starting realtime mode - requesting MIDI access...\n");
     js_request_midi_access();
 }
 
@@ -1156,13 +1251,10 @@ mdep_fontinit(char *fnt)
 int
 mdep_mouse(int *ax, int *ay, int *am)
 {
-    // Get current mouse state from JavaScript
-    int x = 0, y = 0, buttons = 0;
-    js_get_mouse_state(&x, &y, &buttons);
-
-    *ax = x;
-    *ay = y;
-    *am = buttons;
+    // Return current mouse state (updated by callbacks)
+    *ax = current_mouse_x;
+    *ay = current_mouse_y;
+    *am = current_mouse_buttons;
     return 0;
 }
 

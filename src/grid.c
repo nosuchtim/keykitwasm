@@ -351,8 +351,8 @@ drawclipped(Kwind *w,Phrasep p,long sclicks,long eclicks,int spitch,int epitch,i
 		}
 		if ( ndrawn++ > *Drawcount ) {
 			ndrawn = 0;
-			chkinput();
-			chkoutput();
+			chkmidiinput();
+			chkmidioutput();
 		}
 	}
 	if ( *Colornotes )

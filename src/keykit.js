@@ -4493,13 +4493,6 @@ async function createWasm() {
           return canvas ? canvas.width : 0;
       }
 
-  function _js_get_key() {
-          if (!window.keykitKeyBuffer || window.keykitKeyBuffer.length === 0) {
-              return -1;
-          }
-          return window.keykitKeyBuffer.shift();
-      }
-
   function _js_get_midi_input_count() {
           if (!window.midiInputs) {
               return 0;
@@ -4532,17 +4525,6 @@ async function createWasm() {
           var device = window.midiOutputs[index];
           var name = device.name || 'MIDI Output ' + index;
           stringToUTF8(name, buffer, buffer_size);
-      }
-
-  function _js_get_mouse_state(x_ptr, y_ptr, buttons_ptr) {
-          setValue(x_ptr, window.keykitMouseX || 0, 'i32');
-          setValue(y_ptr, window.keykitMouseY || 0, 'i32');
-          setValue(buttons_ptr, window.keykitMouseButtons || 0, 'i32');
-          return 0;
-      }
-
-  function _js_has_key() {
-          return (window.keykitKeyBuffer && window.keykitKeyBuffer.length > 0) ? 1 : 0;
       }
 
   function _js_open_midi_input(index) {
@@ -4616,13 +4598,6 @@ async function createWasm() {
           if (!canvas) return;
           var ctx = canvas.getContext('2d');
           ctx.globalCompositeOperation = UTF8ToString(operation);
-      }
-
-  function _js_set_fill_color(color) {
-          var canvas = document.getElementById('keykit-canvas');
-          if (!canvas) return;
-          var ctx = canvas.getContext('2d');
-          ctx.fillStyle = UTF8ToString(color);
       }
 
   function _js_set_font(font) {
@@ -5779,8 +5754,6 @@ var wasmImports = {
   /** @export */
   js_get_canvas_width: _js_get_canvas_width,
   /** @export */
-  js_get_key: _js_get_key,
-  /** @export */
   js_get_midi_input_count: _js_get_midi_input_count,
   /** @export */
   js_get_midi_input_name: _js_get_midi_input_name,
@@ -5788,10 +5761,6 @@ var wasmImports = {
   js_get_midi_output_count: _js_get_midi_output_count,
   /** @export */
   js_get_midi_output_name: _js_get_midi_output_name,
-  /** @export */
-  js_get_mouse_state: _js_get_mouse_state,
-  /** @export */
-  js_has_key: _js_has_key,
   /** @export */
   js_open_midi_input: _js_open_midi_input,
   /** @export */
@@ -5802,8 +5771,6 @@ var wasmImports = {
   js_set_color: _js_set_color,
   /** @export */
   js_set_composite_operation: _js_set_composite_operation,
-  /** @export */
-  js_set_fill_color: _js_set_fill_color,
   /** @export */
   js_set_font: _js_set_font,
   /** @export */

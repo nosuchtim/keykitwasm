@@ -644,8 +644,9 @@ exectasks(int nosetjmp)
 		// mdep_popup("TJT DEBUG exectasks after waitfor");
 
 		/* Handle MIDI I/O right away. */
-		chkoutput();
-		chkinput();
+		chkmidioutput();
+		chkmidiinput();
+		checkmouse();
 
 		switch(wn){
 		case 0:
@@ -1470,35 +1471,43 @@ checkmouse(void)
 	int m, x, y, mod, b;
 	int moved;
 	int pressed = 0;
+	int event_type;
 
 	if ( *Mousedisable )
 		return;
 
-	b = mdep_mouse(&x,&y,&mod);
-	m = b & 3;	/* We only want to acknowledge button 1&2 */
+	/* Process all mouse events in the buffer */
+	while ( mdep_get_mouse_event(&x, &y, &mod, &event_type) ) {
+		m = mod & 3;	/* We only want to acknowledge button 1&2 */
 
-	moved = (x!=oldx || y!=oldy);
+		moved = (x!=oldx || y!=oldy);
 
-	/* Avoid multiple mouse events when the mouse hasn't moved */
-	if ( m==oldm && !moved )
-		return;
+		/* Determine if button was pressed or released based on event_type */
+		/* event_type: 0=move, 1=button down, 2=button up */
+		if ( event_type == 1 )
+			pressed = 1;  /* Button down */
+		else if ( event_type == 2 )
+			pressed = -1; /* Button up */
+		else
+			pressed = 0;  /* Move only */
+
+		/* Avoid duplicate events */
+		if ( m==oldm && !moved && event_type == 0 )
+			continue;
 
 #ifdef NO_MOUSE_UP_DRAG_EVENTS
-	/* This eliminates mouse drag events when the button is up. */
-	if ( m==oldm && m==0 ) )
-		return;
+		/* This eliminates mouse drag events when the button is up. */
+		if ( m==oldm && m==0 && event_type == 0 )
+			continue;
 #endif
-	if ( oldm == 0 && m != 0 )
-		pressed = 1;
-	else if ( oldm > 0 && m == 0 )
-		pressed = -1;
 
-	oldm = m;
-	if ( moved ) {
-		oldx = x;
-		oldy = y;
+		oldm = m;
+		if ( moved ) {
+			oldx = x;
+			oldy = y;
+		}
+		putonmousefifo(m,x,y,pressed,mod);
 	}
-	putonmousefifo(m,x,y,pressed,mod);
 }
 
 int

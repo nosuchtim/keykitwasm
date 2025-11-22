@@ -481,15 +481,15 @@ chkrealoften(void)
 {
 	static int cnt = 0;
 	if ( ++cnt > *Throttle2 ) {
-		chkinput();
-		chkoutput();
+		chkmidiinput();
+		chkmidioutput();
 		cnt = 0;
 	}
 }
 #endif
 
 void
-chkinput(void)
+chkmidiinput(void)
 {
 	/* Grab MIDI input (possibly echo it) */
 	/* and queue up the note on/off's to be */
@@ -519,7 +519,7 @@ chkinput(void)
 }
 
 void
-chkoutput(void)
+chkmidioutput(void)
 {
 	Sched *s, *pres, *nexts;
 	Ktaskp t;
