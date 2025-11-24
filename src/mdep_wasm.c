@@ -291,12 +291,23 @@ static char midi_output_names[MIDI_OUT_DEVICES][MAX_MIDI_DEVICE_NAME];
 // MIDI initialization flag
 static int midi_initialized = 0;
 
+// Font metrics cache
+static int cached_font_width = -1;
+static int cached_font_height = -1;
+
+// Window resize tracking
+static int window_resize_pending = 0;
+static int last_canvas_width = 0;
+static int last_canvas_height = 0;
+
 // Callback from JavaScript when MIDI message is received
+// IMPORTANT: Keep this function minimal! Do NOT call mdep_popup() or other
+// complex KeyKit functions from here, as this is called asynchronously from
+// JavaScript and can cause stack corruption with ASYNCIFY.
 EMSCRIPTEN_KEEPALIVE
 void mdep_on_midi_message(int device_index, int status, int data1, int data2)
 {
-	mdep_popup("TJT DEBUG mdep_on_midi_message callback!!!! ");
-    // Add MIDI bytes to buffer
+    // Simply add MIDI bytes to buffer - no complex operations
     if (midi_buffer_count + 3 <= MIDI_BUFFER_SIZE) {
         midi_input_buffer[midi_buffer_write_pos++] = (unsigned char)status;
         if (midi_buffer_write_pos >= MIDI_BUFFER_SIZE)
@@ -383,6 +394,16 @@ void mdep_on_key_event(int down, int keycode, int ctrl, int shift, int alt)
             printf("Warning: keyboard buffer full, dropping keycode %d\n", keycode);
         }
     }
+}
+
+// Callback from JavaScript when window is resized
+EMSCRIPTEN_KEEPALIVE
+void mdep_on_window_resize(int width, int height)
+{
+    // Mark that a resize event occurred
+    window_resize_pending = 1;
+    last_canvas_width = width;
+    last_canvas_height = height;
 }
 
 // Helper functions to check modifier key state
@@ -903,6 +924,16 @@ mdep_waitfor(int millimsecs)
     if (millimsecs > 0) {
         emscripten_sleep(millimsecs);
 	}
+
+    // Check for window resize event
+    if (window_resize_pending) {
+        window_resize_pending = 0;
+        // Update cached canvas dimensions
+        canvas_width = last_canvas_width;
+        canvas_height = last_canvas_height;
+        return K_WINDRESIZE;
+    }
+
 	if ( mdep_statconsole() ) {
 		return K_CONSOLE;
 	}
@@ -969,13 +1000,19 @@ mdep_maxy(void)
 int
 mdep_fontwidth(void)
 {
-    return js_get_font_width();
+    if (cached_font_width < 0) {
+        cached_font_width = js_get_font_width();
+    }
+    return cached_font_width;
 }
 
 int
 mdep_fontheight(void)
 {
-    return js_get_font_height() + 4; // Add small padding
+    if (cached_font_height < 0) {
+        cached_font_height = js_get_font_height() + 6; // Add small padding
+    }
+    return cached_font_height;
 }
 
 void
@@ -991,7 +1028,7 @@ mdep_string(int x, int y, char *s)
 		// printf(stderr,"TJT DEBUG mdep_string is calling js_draw_text at %d,%d: %s\n", x, y, s);
 		// mdep_popup(Msg1);
 		// printf("TJT DEBUG mdep_string s=%s\n",s);
-        js_draw_text(x, y + mdep_fontheight() - 2, s);
+        js_draw_text(x, y + mdep_fontheight() - 4, s);
     }
 }
 
@@ -1096,6 +1133,10 @@ mdep_startgraphics(int argc, char **argv)
     // Set default font
     js_set_font("16px monospace");
 
+    // Initialize font metrics cache
+    cached_font_width = js_get_font_width();
+    cached_font_height = js_get_font_height() + 6;
+
     // Set default color
     mdep_color(1); // White?
 
@@ -1174,6 +1215,17 @@ mdep_screenresize(int x0, int y0, int x1, int y1)
 char *
 mdep_fontinit(char *fnt)
 {
+    // Invalidate font metrics cache when font changes
+    cached_font_width = -1;
+    cached_font_height = -1;
+
+    // Set the font in JavaScript if a specific font is requested
+    if (fnt && *fnt) {
+        // Convert KeyKit font name to CSS font specification
+        // For now, just use the default monospace
+        js_set_font("16px monospace");
+    }
+
     // Return default font name
     return "monospace";
 }
@@ -1205,15 +1257,15 @@ mdep_colormix(int n, int r, int g, int b)
 	if ( n < 0 || n >= KEYNCOLORS ) {
 		execerror("mdep_colormix: color index %d out of range\n", n);
 	}
-    mdep_popup("TJT DEBUG colormix");
+    // mdep_popup("TJT DEBUG colormix");
 	// The values in keykit are 0 to MAX_COLOR_VALUE
 	r = (r % MAX_COLOR_VALUE) / 256;
 	g = (g % MAX_COLOR_VALUE) / 256;
 	b = (b % MAX_COLOR_VALUE) / 256;
 	sprintf(current_color_rgb,"rgb(%d,%d,%d)", r, g, b);
-	mdep_popup(current_color_rgb);
+	// mdep_popup(current_color_rgb);
 	color_list[n] = strdup(current_color_rgb);
-	printf("mdep_colormix n=%d current_color_rgb=%s\n", n, current_color_rgb);
+	// printf("mdep_colormix n=%d current_color_rgb=%s\n", n, current_color_rgb);
     js_set_color(current_color_rgb);
 }
 

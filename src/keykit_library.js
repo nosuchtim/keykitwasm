@@ -96,27 +96,44 @@ mergeInto(LibraryManager.library, {
     // Get font height (font metrics)
     js_get_font_height: function () {
         var canvas = document.getElementById('keykit-canvas');
-        if (!canvas) return 16;  // default fallback
+        if (!canvas) {
+            console.log('js_get_font_height: canvas not found, returning default 16');
+            return 16;  // default fallback
+        }
         var ctx = canvas.getContext('2d');
         var metrics = ctx.measureText('M');
+
+        console.log('js_get_font_height: current font = ' + ctx.font);
+        console.log('js_get_font_height: metrics =', metrics);
+
         // Use actualBoundingBoxAscent + actualBoundingBoxDescent if available
         // Otherwise estimate from font size
         if (metrics.actualBoundingBoxAscent !== undefined &&
             metrics.actualBoundingBoxDescent !== undefined) {
-            return Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+            var height = Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+            console.log('js_get_font_height: using bounding box: ascent=' + metrics.actualBoundingBoxAscent +
+                       ' descent=' + metrics.actualBoundingBoxDescent + ' total=' + height);
+            return height;
         }
         // Fallback: extract font size from font string (e.g., "16px monospace")
-        var fontSize = parseInt(ctx.font.match(/(\d+)px/));
-        return fontSize || 16;
+        var match = ctx.font.match(/(\d+)px/);
+        var fontSize = match ? parseInt(match[1]) : 16;
+        console.log('js_get_font_height: using font size from string: ' + fontSize);
+        return fontSize;
     },
 
     // Get font width (measure width of 'M' character)
     js_get_font_width: function () {
         var canvas = document.getElementById('keykit-canvas');
-        if (!canvas) return 8;  // default fallback
+        if (!canvas) {
+            console.log('js_get_font_width: canvas not found, returning default 8');
+            return 8;  // default fallback
+        }
         var ctx = canvas.getContext('2d');
         var metrics = ctx.measureText('M');
-        return Math.ceil(metrics.width);
+        var width = Math.ceil(metrics.width);
+        // console.log('js_get_font_width: current font = ' + ctx.font + ', width = ' + width);
+        return width;
     },
 
     // Draw filled polygon

@@ -11,6 +11,7 @@ This directory contains KeyKit library files that are loaded at runtime in the W
 - **`*.exp`** - Export/expression files
 - **`*.txt`** - Text/documentation files
 - **`*.ppm`** - PPM image files
+- **`*.lst`** - List files (tool definitions)
 
 ## Manifest
 
@@ -20,9 +21,23 @@ The **`lib_manifest.json`** file contains a JSON array of all library files that
 
 When you add or remove files in this directory, regenerate the manifest:
 
+**Using Python (recommended, cross-platform):**
+```bash
+python generate_manifest.py
+```
+
+**Using bash/MSYS2/Git Bash:**
 ```bash
 bash generate_manifest.sh
 ```
+
+**Using Windows Command Prompt:**
+```cmd
+generate_manifest.bat
+```
+(The batch file automatically tries Python first, then falls back to bash)
+
+**Or just double-click** `generate_manifest.bat` in Windows Explorer.
 
 This will update `lib_manifest.json` with the current list of files.
 
@@ -38,4 +53,4 @@ See `../RUNTIME_LIBRARY_LOADING.md` for complete details.
 
 ## File Count
 
-Currently contains **374 library files**.
+Currently contains **396 library files**.

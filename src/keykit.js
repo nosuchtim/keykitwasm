@@ -4499,26 +4499,43 @@ async function createWasm() {
 
   function _js_get_font_height() {
           var canvas = document.getElementById('keykit-canvas');
-          if (!canvas) return 16;  // default fallback
+          if (!canvas) {
+              console.log('js_get_font_height: canvas not found, returning default 16');
+              return 16;  // default fallback
+          }
           var ctx = canvas.getContext('2d');
           var metrics = ctx.measureText('M');
+  
+          console.log('js_get_font_height: current font = ' + ctx.font);
+          console.log('js_get_font_height: metrics =', metrics);
+  
           // Use actualBoundingBoxAscent + actualBoundingBoxDescent if available
           // Otherwise estimate from font size
           if (metrics.actualBoundingBoxAscent !== undefined &&
               metrics.actualBoundingBoxDescent !== undefined) {
-              return Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+              var height = Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+              console.log('js_get_font_height: using bounding box: ascent=' + metrics.actualBoundingBoxAscent +
+                         ' descent=' + metrics.actualBoundingBoxDescent + ' total=' + height);
+              return height;
           }
           // Fallback: extract font size from font string (e.g., "16px monospace")
-          var fontSize = parseInt(ctx.font.match(/(\d+)px/));
-          return fontSize || 16;
+          var match = ctx.font.match(/(\d+)px/);
+          var fontSize = match ? parseInt(match[1]) : 16;
+          console.log('js_get_font_height: using font size from string: ' + fontSize);
+          return fontSize;
       }
 
   function _js_get_font_width() {
           var canvas = document.getElementById('keykit-canvas');
-          if (!canvas) return 8;  // default fallback
+          if (!canvas) {
+              console.log('js_get_font_width: canvas not found, returning default 8');
+              return 8;  // default fallback
+          }
           var ctx = canvas.getContext('2d');
           var metrics = ctx.measureText('M');
-          return Math.ceil(metrics.width);
+          var width = Math.ceil(metrics.width);
+          // console.log('js_get_font_width: current font = ' + ctx.font + ', width = ' + width);
+          return width;
       }
 
   function _js_get_image_data(x, y, width, height, buffer) {
@@ -5697,6 +5714,7 @@ var _mdep_on_midi_message = Module['_mdep_on_midi_message'] = makeInvalidEarlyAc
 var _mdep_on_mouse_move = Module['_mdep_on_mouse_move'] = makeInvalidEarlyAccess('_mdep_on_mouse_move');
 var _mdep_on_mouse_button = Module['_mdep_on_mouse_button'] = makeInvalidEarlyAccess('_mdep_on_mouse_button');
 var _mdep_on_key_event = Module['_mdep_on_key_event'] = makeInvalidEarlyAccess('_mdep_on_key_event');
+var _mdep_on_window_resize = Module['_mdep_on_window_resize'] = makeInvalidEarlyAccess('_mdep_on_window_resize');
 var _emscripten_stack_get_end = makeInvalidEarlyAccess('_emscripten_stack_get_end');
 var _emscripten_stack_get_base = makeInvalidEarlyAccess('_emscripten_stack_get_base');
 var _setThrew = makeInvalidEarlyAccess('_setThrew');
@@ -5734,6 +5752,7 @@ function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['mdep_on_mouse_move'] != 'undefined', 'missing Wasm export: mdep_on_mouse_move');
   assert(typeof wasmExports['mdep_on_mouse_button'] != 'undefined', 'missing Wasm export: mdep_on_mouse_button');
   assert(typeof wasmExports['mdep_on_key_event'] != 'undefined', 'missing Wasm export: mdep_on_key_event');
+  assert(typeof wasmExports['mdep_on_window_resize'] != 'undefined', 'missing Wasm export: mdep_on_window_resize');
   assert(typeof wasmExports['emscripten_stack_get_end'] != 'undefined', 'missing Wasm export: emscripten_stack_get_end');
   assert(typeof wasmExports['emscripten_stack_get_base'] != 'undefined', 'missing Wasm export: emscripten_stack_get_base');
   assert(typeof wasmExports['setThrew'] != 'undefined', 'missing Wasm export: setThrew');
@@ -5767,6 +5786,7 @@ function assignWasmExports(wasmExports) {
   _mdep_on_mouse_move = Module['_mdep_on_mouse_move'] = createExportWrapper('mdep_on_mouse_move', 2);
   _mdep_on_mouse_button = Module['_mdep_on_mouse_button'] = createExportWrapper('mdep_on_mouse_button', 4);
   _mdep_on_key_event = Module['_mdep_on_key_event'] = createExportWrapper('mdep_on_key_event', 5);
+  _mdep_on_window_resize = Module['_mdep_on_window_resize'] = createExportWrapper('mdep_on_window_resize', 2);
   _emscripten_stack_get_end = wasmExports['emscripten_stack_get_end'];
   _emscripten_stack_get_base = wasmExports['emscripten_stack_get_base'];
   _setThrew = createExportWrapper('setThrew', 2);

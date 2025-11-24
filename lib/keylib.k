@@ -1601,8 +1601,6 @@
 #library vary.k stutter
 #library vary.k stutterrand
 #library vary.k strnotes
-#library video.k vidstart
-#library video.k vidtest
 #library virusb.k virusb
 #library virusb.k virusbunpatch
 #library virusb.k patchmap_virusb
@@ -2115,13 +2113,6 @@
 #library wthreshold.k wthreshold
 #library wtimer.k wtimer
 #library wtimer.k wtimer_task
-#library wtrails.k wtrails
-#library wtrails.k mkmenu_trailspreview
-#library wtrails.k mkmenu_trailstype
-#library wtrails.k mkmenu_trailssize
-#library wtrails.k mkmenu_trailssegsize
-#library wtrails.k mkmenu_trailsread
-#library wtrails.k mkmenu_trails1
 #library wtrapped.k wtrapped
 #library wtrapped.k mkmenu_trapped1
 #library wtrapped.k mkmenu_trappedchan

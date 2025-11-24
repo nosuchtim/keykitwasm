@@ -82,8 +82,8 @@ keygo.dll : $(ALLDECS) $(KEYOBJ) key.res
 key.res: key.rc
 	rc $(rcvars) /I $(PLATINC) -r key.rc
 
-keylib.exe : keylib.obj mdep1.obj misc.obj
-	$(LINK) $(conflags) $(VCPATHS) -out:keylib.exe keylib.obj mdep1.obj misc.obj $(conlibs)
+keylib.exe : keylib.obj
+	$(LINK) $(conflags) $(VCPATHS) -out:keylib.exe keylib.obj $(conlibs)
 
 tjt.exe : tjt.obj 
 	$(LINK) $(conflags) $(VCPATHS) -out:tjt.exe tjt.obj $(conlibs)

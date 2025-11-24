@@ -5,7 +5,9 @@
       "Bash(cmd //c build_examples.bat)",
       "Bash(bash build_examples.bat)",
       "Bash(python build_wasm.py:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(bash:*)",
+      "Bash(cmd //c build_keylib.bat)"
     ],
     "deny": [],
     "ask": []

@@ -235,19 +235,19 @@ function lookforandopen(iotype,port,verbose) {
 		}
 		port = found
 	}
-	print("LOOKFORANDOPEN checking isopen!\n")
-	print(port)
-	print("LOOKFORANDOPEN after printing port")
-	print(typeof(port))
-	print("LOOKFORANDOPEN after printing typeof")
 	print("Port =" + string(port))
 	print("iotype =" + string(iotype))
+	verbose = 1
 	if ( midi(iotype,"isopen",port) ) {
-		if ( verbose )
+		print("already open?")
+		if ( verbose ) {
 			print("Port is already open!  ("+iotype+" "+string(port)+", "+arr[port]+")")
+		}
 	} else {
+		print("before open, port=",string(port))
 		midi(iotype,"open",port)
 	}
+	print("lookforandopen returning ",string(port))
 	return(port)
 } 
 

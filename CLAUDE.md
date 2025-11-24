@@ -30,6 +30,15 @@ build_examples.bat
 
 This builds two canvas drawing examples demonstrating how to integrate HTML5 Canvas with C/WebAssembly code.
 
+### Building Windows Native Utilities
+
+```bash
+cd src
+bash build_keylib.sh
+```
+
+This builds Windows-native utilities like `keylib.exe` that scan `.k` files and generate library definitions. See [WINDOWS_BUILD.md](src/WINDOWS_BUILD.md) for detailed Windows compilation instructions, including how the Windows-compatible `dirent.h` implementation is used.
+
 ## Architecture
 
 ### Machine-Dependent Layer

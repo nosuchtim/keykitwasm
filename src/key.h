@@ -1214,8 +1214,6 @@ Hey, mdep_statmidi is no longer used!
 #include "d_misc.h"
 #include "d_fsm.h"
 #include "d_keyto.h"
-#include "d_mdep1.h"
-#include "d_mdep2.h"
 #include "d_mfin.h"
 #include "d_midi.h"
 #include "d_real.h"

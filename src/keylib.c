@@ -8,11 +8,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-
-#include "d_mdep1.h"
+#include "dirent_windows.h"
 
 long *Debugmalloc = NULL;
-extern char *myfgets(char*, int, FILE*);
+char *myfgets(char*, int, FILE*);
+int mdep_lsdir(char *dir, char *exp, void (*callback)(char *, int));
 
 /* Read all *.k file in the current directory and construct a keylib.k file */
 /* that contains #library lines for all of the functions and classes defined. */
@@ -123,6 +123,23 @@ main()
 	return(0);
 }
 
+int
+mdep_lsdir(char *dir, char *exp, void (*callback)(char *, int))
+{
+    DIR *d;
+    struct dirent *dirEntry;
+
+    d = opendir(dir);
+    if (d) {
+        while ((dirEntry = readdir(d)) != NULL) {
+            // Simple filter, maybe improve later to match 'exp' pattern
+            callback(dirEntry->d_name, (dirEntry->d_type == DT_DIR));
+        }
+        closedir(d);
+    }
+    return 0;
+}
+
 void
 keyerrfile(char *fmt, ...)
 {
@@ -155,4 +172,27 @@ keyerrfile(char *fmt, ...)
 void
 mdep_destroywindow(void)
 {
+}
+char *
+myfgets(char *buff, int bufsiz, FILE *f)
+{
+	int c;
+	int n;
+	char *p = buff;
+
+	for ( n=0; n<bufsiz; n++ ) {
+		c = getc(f);
+		if ( c < 0 ) {
+			if ( p == buff )
+				return 0;
+			else
+				return buff;
+		}
+		*p++ = c;
+		if ( c == '\n' || c == '\r' ) {
+			*p = 0;
+			return buff;
+		}
+	}
+	return buff;
 }
