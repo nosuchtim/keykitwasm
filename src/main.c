@@ -1153,8 +1153,8 @@ loadkeylibk(void)
 	static char *lastkeypath = NULL;
 	static char *pathfname = NULL;	/* result is kept here */
 
-	sprintf(Msg1,"TJT DEBUG loadkeylibk Keypath=%s\n",*Keypath);
-	mdep_popup(Msg1);
+	// sprintf(Msg1,"TJT DEBUG loadkeylibk Keypath=%s\n",*Keypath);
+	// mdep_popup(Msg1);
 
 	(void) pathsearch("keylib.k",&pathsize,&pathparts,
 			&lastkeypath,&pathfname,Keypath,load1keylib);
@@ -1814,7 +1814,6 @@ MAIN(int argc,char **argv)
 	ReadytoEval = 1;
 	go_interactive = 1;
 
-	mdep_popup("TJT DEBUG before argc loop");
 	while ( argc-- > 0 ) {
 		char *arg = *argv++;
 		char *suff = strrchr(arg,'.');

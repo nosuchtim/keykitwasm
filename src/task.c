@@ -701,8 +701,8 @@ loadsym(Symbolp s,int pushit)
 	int nerrs;
 	Datum d;
 
-	sprintf(Msg1,"TJT DEBUG loading symbol '%s' in loadsym",symname(s));
-	mdep_popup(Msg1);
+	// sprintf(Msg1,"TJT DEBUG loading symbol '%s' in loadsym",symname(s));
+	// mdep_popup(Msg1);
 
 #ifdef TRYTHISEVENTUALLY
 	clearsym(s);

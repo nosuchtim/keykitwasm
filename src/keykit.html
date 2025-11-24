@@ -382,14 +382,15 @@
         function initCanvas() {
             var canvas = document.getElementById('keykit-canvas');
             if (canvas) {
-                var ctx = canvas.getContext('2d');
+                // Enable willReadFrequently for better performance with getImageData
+                var ctx = canvas.getContext('2d', { willReadFrequently: true });
                 // Enable text anti-aliasing and subpixel rendering
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
                 // Set default font
                 ctx.font = '16px monospace';
                 ctx.textBaseline = 'top';
-                console.log('[' + new Date().toISOString() + '] Canvas initialized with high-quality text rendering');
+                console.log('[' + new Date().toISOString() + '] Canvas initialized with high-quality text rendering and willReadFrequently');
             }
         }
 
