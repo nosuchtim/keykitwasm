@@ -2,7 +2,6 @@
 # mentioned in Keypath) need updating, and updates them.
 
 function updatelib(forceit,forcerekeylib,path,reread) {
-	printf("Inside updatelib A")
 	if ( nargs() < 1 )
 		forceit = 0
 	if ( nargs() < 2 )
@@ -17,7 +16,7 @@ function updatelib(forceit,forcerekeylib,path,reread) {
 		dir = dirs[i]
 		if ( dir == "" )
 			continue
-		printf("dir=%s",dir)
+		# printf("dir=%s",dir)
 		if ( ! fileexists(dir) ) {
 			printf("dir doesn't exist!")
 			continue
@@ -26,7 +25,7 @@ function updatelib(forceit,forcerekeylib,path,reread) {
 		keylibtime = filetime(keylibfn)
 		updateit = forceit
 		files = lsdir(dir)
-		printf("files=%d",sizeof(files))
+		# printf("files=%d",sizeof(files))
 		seen = []
 		# remove all the files we're not interested in
 		for ( fn in files ) {
@@ -50,7 +49,7 @@ function updatelib(forceit,forcerekeylib,path,reread) {
 				continue
 			fullpath = dir + Dirseparator + fn
 			if ( filetime(fullpath) > keylibtime ) {
-				printf("============== SHOULD REREAD fn=%s",fn)
+				# printf("============== SHOULD REREAD fn=%s",fn)
 				updateit = 1
 				if ( reread ) {
 					print("Rereading "+fullpath)

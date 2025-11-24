@@ -184,9 +184,6 @@ keystr(char *s)
 {
 	Codep cp;
 
-	sprintf(Msg1,"keystr s=(%s)\n",s);
-	mdep_popup(Msg1);
-
 	T = newtask(instructs(""));
 	cp = instructs(s);
 	if ( cp ) {
@@ -1820,7 +1817,7 @@ MAIN(int argc,char **argv)
 
 		if ( strcmp(arg,"-") == 0 ) {
 			/* Start up an interactive command interpreter */
-			mdep_popup("TJT DEBUG starting interactive argc loop");
+			// mdep_popup("TJT DEBUG starting interactive argc loop");
 			Consolefd = realConsolefd;
 			if ( do_rc ) {
 				keystr("keyrc();");
@@ -1880,8 +1877,7 @@ MAIN(int argc,char **argv)
 			keystr("keyrc();");
 		}
 		mdep_popup("TJT DEBUG before exectasks");
-		mdep_popup("TJT DEBUG DISABLED exectasks() during development, should be re-enabled later");
-		// exectasks(0);
+		exectasks(0);
 		Consolefd = -1;
 	}
 	mdep_popup("TJT DEBUG after interactive");

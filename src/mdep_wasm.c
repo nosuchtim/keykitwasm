@@ -32,7 +32,6 @@ extern void js_restore_context();
 extern void js_set_composite_operation(const char *operation);
 
 // Web MIDI API functions
-extern void js_request_midi_access();
 extern int js_get_midi_input_count();
 extern int js_get_midi_output_count();
 extern void js_get_midi_input_name(int index, char *buffer, int buffer_size);
@@ -503,8 +502,6 @@ mdep_initmidi(Midiport *inputs, Midiport *outputs)
 {
     int i;
 
-    mdep_popup("TJT DEBUG in mdep_initmidi =================");
-
     // Clear MIDI buffer
     midi_buffer_read_pos = 0;
     midi_buffer_write_pos = 0;
@@ -515,11 +512,9 @@ mdep_initmidi(Midiport *inputs, Midiport *outputs)
     int num_inputs = js_get_midi_input_count();
     int num_outputs = js_get_midi_output_count();
 
-    sprintf(Msg1,"TJT DEBUG mdep_initmidi: inputs=%d outputs=%d\n", num_inputs, num_outputs);
-    mdep_popup(Msg1);
-
     printf("Initializing MIDI ports: %d inputs, %d outputs\n", num_inputs, num_outputs);
 
+    int verbose = 0;
     // Initialize MIDI input ports directly
     for (i = 0; i < MIDI_IN_DEVICES; i++) {
         if (i < num_inputs) {
@@ -528,7 +523,9 @@ mdep_initmidi(Midiport *inputs, Midiport *outputs)
             inputs[i].name = midi_input_names[i];
             inputs[i].opened = 0;
             inputs[i].private1 = i; // Store device index
-            printf("  MIDI Input %d: %s\n", i, inputs[i].name);
+            if ( verbose ) {
+                printf("  MIDI Input %d: %s\n", i, inputs[i].name);
+            }
         } else {
             inputs[i].name = NULL;
             inputs[i].opened = 0;
@@ -544,7 +541,9 @@ mdep_initmidi(Midiport *inputs, Midiport *outputs)
             outputs[i].name = midi_output_names[i];
             outputs[i].opened = 0;
             outputs[i].private1 = i; // Store device index
-            printf("  MIDI Output %d: %s\n", i, outputs[i].name);
+            if ( verbose ) {
+                printf("  MIDI Output %d: %s\n", i, outputs[i].name);
+            }
         } else {
             outputs[i].name = NULL;
             outputs[i].opened = 0;
@@ -1185,8 +1184,8 @@ mdep_startgraphics(int argc, char **argv)
 void
 mdep_startrealtime(void)
 {
-    // Start realtime mode - request MIDI access
-    js_request_midi_access();
+    // Start realtime mode - MIDI already initialized in preRun
+    // Nothing to do here
 }
 
 void

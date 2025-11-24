@@ -578,7 +578,6 @@ exectasks(int nosetjmp)
 	int wn, b;
 	long tmout, ccnt, thcnt;
 
-	mdep_popup("TJT DEBUG exectasks begin ===================\n");
 #ifdef PYTHON
 	Py_BEGIN_ALLOW_THREADS
 

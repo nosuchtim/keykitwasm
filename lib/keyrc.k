@@ -14,7 +14,6 @@ function keyrc() {
 	Prercfuncs = []
 	Postrcfuncs = []
 
-	print("keyrc TESTING 222\n")
 	prelocaldefaults()
 
 	# Guarantee that prerc is first
@@ -22,9 +21,7 @@ function keyrc() {
 		addprerc(prerc)
 	}
 
-	print("keyrc DEBUG 333\n")
 	dokeylocal()
-	print("keyrc DEBUG 4444\n")
 
 	updatelib(0,1)	# Update the keylib.k files, if anything's changed.
 			# The second argument (1) forces a rekeylib()
@@ -69,9 +66,9 @@ function addpostrc(f) {
 #desc	and if that doesn't exist, use some defaults
 function dokeylocal() {
 
-	print("DEBUG SETUP in dokeylocal()")
-	inp = inport("01. Internal MIDI")
-	print("inport called, inp=",inp)
+	forcein = "01. Internal MIDI"
+	inp = inport(forcein)
+	print("dokeylocal() is opening MIDI input = "+forcein+" port = "+string(inp))
 
 	# KEYOUT environment variable is default output port
 	outportname = mdep("env","get","KEYOUT")

@@ -105,7 +105,6 @@ i_task(void)
 	Symbolp s;
 	Datum d;
 
-	mdep_popup("TJT DEBUG i_task A\n");	
 	peekinto(d);
 	npassed = (int)numval(d);
 

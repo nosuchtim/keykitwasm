@@ -247,15 +247,6 @@ mergeInto(LibraryManager.library, {
 
     // ========== Web MIDI API Functions ==========
 
-    // Global MIDI access object
-    js_request_midi_access__deps: ['$stringToUTF8'],
-    js_request_midi_access: function () {
-        // MIDI is already initialized in preRun (in keykit_shell.html)
-        // The devices are already in window.midiInputs and window.midiOutputs
-        // This function is just a no-op now
-        console.log('js_request_midi_access called (MIDI already initialized in preRun)');
-    },
-
     // Get number of MIDI input devices
     js_get_midi_input_count: function () {
         if (!window.midiInputs) {
@@ -324,9 +315,9 @@ mergeInto(LibraryManager.library, {
             else if ((status & 0xF0) === 0xC0) msgType = 'Program Change';
             else msgType = 'Other';
 
-            console.log('[MIDI IN] Device ' + index + ' (' + input.name + '): ' + msgType +
-                       ' - Status: 0x' + status.toString(16).padStart(2, '0') +
-                       ', Data1: ' + data1 + ', Data2: ' + data2);
+            // console.log('[MIDI IN] Device ' + index + ' (' + input.name + '): ' + msgType +
+            //            ' - Status: 0x' + status.toString(16).padStart(2, '0') +
+            //            ', Data1: ' + data1 + ', Data2: ' + data2);
 
             // Call back into C code with MIDI data
             if (typeof Module !== 'undefined' && Module.ccall) {
@@ -334,7 +325,7 @@ mergeInto(LibraryManager.library, {
                     Module.ccall('mdep_on_midi_message', null,
                                  ['number', 'number', 'number', 'number'],
                                  [index, status, data1, data2]);
-                    console.log('[MIDI IN] Successfully called C callback');
+                    // console.log('[MIDI IN] Successfully called C callback');
                 } catch (e) {
                     console.error('[MIDI IN] Error calling C callback:', e);
                 }
