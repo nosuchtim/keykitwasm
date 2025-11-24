@@ -69,6 +69,10 @@ function addpostrc(f) {
 #desc	and if that doesn't exist, use some defaults
 function dokeylocal() {
 
+	print("DEBUG SETUP in dokeylocal()")
+	inp = inport("01. Internal MIDI")
+	print("inport called, inp=",inp)
+
 	# KEYOUT environment variable is default output port
 	outportname = mdep("env","get","KEYOUT")
 	if ( defined(outportname) && (outportname != "") ) {

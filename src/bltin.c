@@ -2108,8 +2108,6 @@ int
 validoutputport(int portno)
 {
 	/* portno is keykit-valued input port number */
-	sprintf(Msg1,"validoutputport: portno=%d\n",portno);
-	mdep_popup(Msg1);
 	if ( portno < 1 || portno >= MIDI_OUT_DEVICES || Midioutputs[portno-1].name == NULL ) {
 		mdep_popup("invalid output port!\n");	
 		eprint("midi: No output device # %d !?\n",portno);
@@ -2255,8 +2253,6 @@ bi_midi(int argc)
 				goto getout;
 			}
 
-			mdep_popup("TJT DEBUG midi output close");	
-
 			if ( ! validinputport(portno) ) {
 				eprint("midi: invalid output port number %d !?\n",portno);
 				goto getout;
@@ -2277,8 +2273,6 @@ bi_midi(int argc)
 				eprint("usage: midi(output,open,#)\n");
 				goto getout;
 			}
-
-			mdep_popup("TJT DEBUG midi output open");	
 
 			if ( ! validoutputport(portno) ) {
 				eprint("midi: invalid output port number %d !?\n",portno);
@@ -2306,28 +2300,17 @@ bi_midi(int argc)
 		else if ( strcmp(arg1,"isopen")==0 ) {
 			if ( argc > 2 ) {
 				Datum dd = ARG(2);
-				sprintf(Msg2,"TJT DEBUG midi output isopen before neednum, dd.type=%d val=%ld",dd.type,dd.u.val);
-				mdep_popup(Msg2);
 				portno = neednum("midi",dd);
-				mdep_popup("TJT DEBUG midi output isopen after neednum");
-				sprintf(Msg2,"TJT DEBUG midi output isopen after neednum, portno=%d",portno);
-				mdep_popup(Msg2);
 			} else {
 				eprint("usage: midi(output,isopen,#)\n");
 				goto getout;
 			}
 
-			sprintf(Msg2,"TJT DEBUG midi output isopen portno=%d",portno);
-			mdep_popup("TJT DEBUG midi output isopen");	
-
 			if ( ! validoutputport(portno) ) {
 				eprint("midi: invalid output port number %d !?\n",portno);
-				mdep_popup("TJT DEBUG midi output isopen invalid port number ");	
 				goto getout;
 			}
-			mdep_popup("TJT DEBUG midi output isopen setting r");	
 			r = Midioutputs[portno-1].opened;
-			mdep_popup("TJT DEBUG midi output isopen after setting r");	
 			d = numdatum(r);
 		} else {
 			eprint("usage: midi(output,list/open/close/isopen,#)\n");

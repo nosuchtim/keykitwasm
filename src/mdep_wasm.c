@@ -244,6 +244,7 @@ static unsigned char midi_input_buffer[MIDI_BUFFER_SIZE];
 static int midi_buffer_read_pos = 0;
 static int midi_buffer_write_pos = 0;
 static int midi_buffer_count = 0;
+static int midi_messages_received = 0; // Debug counter
 
 // Keyboard input buffer for incoming keypresses
 typedef struct {
@@ -322,6 +323,7 @@ void mdep_on_midi_message(int device_index, int status, int data1, int data2)
             midi_buffer_write_pos = 0;
 
         midi_buffer_count += 3;
+        midi_messages_received++; // Count messages for debugging
     }
 }
 
@@ -428,7 +430,7 @@ int mdep_get_mouse_event(int *x, int *y, int *buttons, int *event_type)
     if (mouse_buffer_count > 0) {
         MouseEvent *event = &mouse_buffer[mouse_buffer_read_pos];
         *x = event->x;
-        *y = event->y;
+        *y = event->y + 4;  // HACK?? Adjust for browser chrome offset
         *buttons = event->buttons;
         *event_type = event->event_type;
 
@@ -453,6 +455,7 @@ mdep_getnmidi(char *buff, int buffsize, int *port)
 {
     // Read MIDI data from buffer
     int bytes_read = 0;
+    int initial_count = midi_buffer_count;
 
     while (bytes_read < buffsize && midi_buffer_count > 0) {
         buff[bytes_read++] = midi_input_buffer[midi_buffer_read_pos++];
@@ -463,6 +466,24 @@ mdep_getnmidi(char *buff, int buffsize, int *port)
 
     if (port)
         *port = 0; // Default to first port
+
+    // Debug logging for MIDI input reads
+    static int last_log_count = 0;
+    if (bytes_read > 0) {
+        printf("[MIDI READ] Read %d bytes from buffer (buffer had %d, now has %d, total received: %d)\n",
+               bytes_read, initial_count, midi_buffer_count, midi_messages_received);
+        printf("[MIDI READ] Data: ");
+        for (int i = 0; i < bytes_read && i < 16; i++) {
+            printf("0x%02x ", (unsigned char)buff[i]);
+        }
+        printf("\n");
+        last_log_count = midi_messages_received;
+    } else if (midi_messages_received > last_log_count && (midi_messages_received % 10) == 0) {
+        // Log every 10 messages when we're receiving but not reading
+        printf("[MIDI DEBUG] Received %d messages, buffer count: %d (nothing being read!)\n",
+               midi_messages_received, midi_buffer_count);
+        last_log_count = midi_messages_received;
+    }
 
     return bytes_read;
 }
@@ -488,6 +509,7 @@ mdep_initmidi(Midiport *inputs, Midiport *outputs)
     midi_buffer_read_pos = 0;
     midi_buffer_write_pos = 0;
     midi_buffer_count = 0;
+    midi_messages_received = 0;
 
     // Get MIDI device counts (devices are already enumerated in preRun)
     int num_inputs = js_get_midi_input_count();
@@ -1039,7 +1061,8 @@ mdep_color(int c)
 {
 	c = c % KEYNCOLORS;
 	strcpy(current_color_rgb,color_list[c]);
-	printf("mdep_color c=%d current_color_rgb = %s\n", c, current_color_rgb);
+
+	// printf("mdep_color c=%d current_color_rgb = %s\n", c, current_color_rgb);
 
     current_color_index = c;
     js_set_color(current_color_rgb);

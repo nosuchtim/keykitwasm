@@ -629,9 +629,11 @@ exectasks(int nosetjmp)
 			else
 				tmout = *Deftimeout;
 		}
-		if ( tmout == 0 ) {
-			tmout = 10;  // HACK for webasm development
-		}
+
+		// if ( tmout == 0 ) {
+		// 	tmout = 10;  // HACK for webasm development
+		// }
+
 		// sprintf(Msg1,"TJT DEBUG exectasks before waitfor tmout=%ld",tmout);	
 		// mdep_popup(Msg1);
 		wn = mdep_waitfor((int)tmout);

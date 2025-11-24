@@ -4483,7 +4483,7 @@ async function createWasm() {
           var canvas = document.getElementById('keykit-canvas');
           if (!canvas) return;
           var ctx = canvas.getContext('2d');
-          console.log('js_fill_rect:', x, y, w, h, 'fillStyle:', ctx.fillStyle);
+          // console.log('js_fill_rect:', x, y, w, h, 'fillStyle:', ctx.fillStyle);
           ctx.fillRect(x, y, w, h);
       }
 
@@ -4604,11 +4604,33 @@ async function createWasm() {
               var data1 = data.length > 1 ? data[1] : 0;
               var data2 = data.length > 2 ? data[2] : 0;
   
+              // Log MIDI input for debugging
+              var msgType = '';
+              if ((status & 0xF0) === 0x90 && data2 > 0) msgType = 'Note On';
+              else if ((status & 0xF0) === 0x80 || ((status & 0xF0) === 0x90 && data2 === 0)) msgType = 'Note Off';
+              else if ((status & 0xF0) === 0xB0) msgType = 'Control Change';
+              else if ((status & 0xF0) === 0xE0) msgType = 'Pitch Bend';
+              else if ((status & 0xF0) === 0xD0) msgType = 'Channel Pressure';
+              else if ((status & 0xF0) === 0xA0) msgType = 'Poly Aftertouch';
+              else if ((status & 0xF0) === 0xC0) msgType = 'Program Change';
+              else msgType = 'Other';
+  
+              console.log('[MIDI IN] Device ' + index + ' (' + input.name + '): ' + msgType +
+                         ' - Status: 0x' + status.toString(16).padStart(2, '0') +
+                         ', Data1: ' + data1 + ', Data2: ' + data2);
+  
               // Call back into C code with MIDI data
               if (typeof Module !== 'undefined' && Module.ccall) {
-                  Module.ccall('mdep_on_midi_message', null,
-                               ['number', 'number', 'number', 'number'],
-                               [index, status, data1, data2]);
+                  try {
+                      Module.ccall('mdep_on_midi_message', null,
+                                   ['number', 'number', 'number', 'number'],
+                                   [index, status, data1, data2]);
+                      console.log('[MIDI IN] Successfully called C callback');
+                  } catch (e) {
+                      console.error('[MIDI IN] Error calling C callback:', e);
+                  }
+              } else {
+                  console.warn('[MIDI IN] Module not ready, message dropped');
               }
           };
   
