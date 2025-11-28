@@ -374,6 +374,40 @@
                     const files = Module.FS.readdir('/keykit/lib');
                     console.log(`Virtual filesystem contains ${files.length - 2} files`);
 
+                    // Now load music files
+                    try {
+                        Module.FS.mkdir('/keykit/music');
+                    } catch (err) { /* may exist */ }
+                    console.log('Created /keykit/music directory');
+
+                    try {
+                        const musicResponse = await fetch('../music/music_manifest.json');
+                        const musicFiles = await musicResponse.json();
+                        console.log(`Found ${musicFiles.length} music files in manifest`);
+
+                        let musicLoaded = 0;
+                        for (let i = 0; i < musicFiles.length; i += batchSize) {
+                            const batch = musicFiles.slice(i, i + batchSize);
+
+                            await Promise.all(batch.map(async (filename) => {
+                                try {
+                                    const fileResponse = await fetch(`../music/${filename}`);
+                                    const content = await fileResponse.arrayBuffer();
+                                    const uint8Array = new Uint8Array(content);
+
+                                    Module.FS.writeFile(`/keykit/music/${filename}`, uint8Array);
+                                    musicLoaded++;
+                                } catch (err) {
+                                    console.warn(`Failed to load music/${filename}:`, err);
+                                }
+                            }));
+                        }
+
+                        console.log('[' + new Date().toISOString() + '] Successfully loaded ' + musicLoaded + ' music files into /keykit/music/');
+                    } catch (err) {
+                        console.warn('Could not load music files:', err);
+                    }
+
                 } catch (err) {
                     console.error('[' + new Date().toISOString() + '] Error loading library files:', err);
                     console.log('Continuing without library files...');

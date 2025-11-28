@@ -578,6 +578,102 @@ mergeInto(LibraryManager.library, {
         }
     },
 
+    // ========== File Browser Functions ==========
+
+    // Open file browser dialog and load selected file into virtual filesystem
+    // Returns pointer to filename in virtual filesystem, or 0 if cancelled
+    js_browse_file__deps: ['$UTF8ToString'],
+    js_browse_file: function (descPtr, typesPtr, mustexist) {
+        var desc = UTF8ToString(descPtr);
+        var types = UTF8ToString(typesPtr);
+
+        // Convert types like "*.mid;*.MID" to accept attribute format ".mid,.MID"
+        var accept = types.replace(/\*\./g, '.').replace(/;/g, ',');
+
+        console.log('[BROWSE] Opening file dialog, desc=' + desc + ' types=' + types + ' accept=' + accept);
+
+        // Create a hidden file input element
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = accept;
+        input.style.display = 'none';
+        document.body.appendChild(input);
+
+        // Use a global to store the result since we need to block
+        window.keykitBrowseResult = null;
+        window.keykitBrowseDone = false;
+
+        input.onchange = function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(evt) {
+                    var data = new Uint8Array(evt.target.result);
+                    var filename = '/keykit/uploads/' + file.name;
+
+                    // Create uploads directory if needed
+                    try {
+                        Module.FS.mkdir('/keykit/uploads');
+                    } catch (err) { /* may exist */ }
+
+                    // Write file to virtual filesystem
+                    Module.FS.writeFile(filename, data);
+                    console.log('[BROWSE] Loaded file: ' + filename + ' (' + data.length + ' bytes)');
+
+                    window.keykitBrowseResult = filename;
+                    window.keykitBrowseDone = true;
+                };
+                reader.onerror = function() {
+                    console.error('[BROWSE] Error reading file');
+                    window.keykitBrowseResult = null;
+                    window.keykitBrowseDone = true;
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                window.keykitBrowseResult = null;
+                window.keykitBrowseDone = true;
+            }
+            document.body.removeChild(input);
+        };
+
+        input.oncancel = function() {
+            console.log('[BROWSE] File dialog cancelled');
+            window.keykitBrowseResult = null;
+            window.keykitBrowseDone = true;
+            document.body.removeChild(input);
+        };
+
+        // Trigger the file dialog
+        input.click();
+
+        // Return 0 - the actual result will be retrieved via js_browse_get_result
+        return 0;
+    },
+
+    // Check if browse dialog is done
+    js_browse_is_done: function() {
+        return window.keykitBrowseDone ? 1 : 0;
+    },
+
+    // Get the browse result (filename or null)
+    // Returns pointer to string that caller must free, or 0 if cancelled/not ready
+    js_browse_get_result: function() {
+        if (!window.keykitBrowseDone || !window.keykitBrowseResult) {
+            return 0;
+        }
+
+        var filename = window.keykitBrowseResult;
+        var len = lengthBytesUTF8(filename) + 1;
+        var ptr = _malloc(len);
+        stringToUTF8(filename, ptr, len);
+
+        // Clear the result
+        window.keykitBrowseResult = null;
+        window.keykitBrowseDone = false;
+
+        return ptr;
+    },
+
     // ========== NATS Messaging Functions ==========
 
     // Connect to NATS server

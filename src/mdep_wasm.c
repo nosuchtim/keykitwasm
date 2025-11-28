@@ -59,6 +59,11 @@ extern int js_websocket_receive(int portId, char *buffer, int bufferSize);
 extern int js_websocket_state(int portId);
 extern int js_websocket_close(int portId);
 
+// File browser functions
+extern void js_browse_file(const char *desc, const char *types, int mustexist);
+extern int js_browse_is_done(void);
+extern char *js_browse_get_result(void);
+
 // Global state for graphics
 static int current_color_index = 0;
 static int canvas_width = 1024;
@@ -1600,8 +1605,33 @@ mdep_ignoreinterrupt(void)
 char *
 mdep_browse(char *desc, char *types, int mustexist)
 {
-    // TODO: Implement file browser dialog
-    return NULL;
+    static char result_filename[512];
+    char *result;
+
+    printf("[BROWSE] mdep_browse called: desc='%s' types='%s' mustexist=%d\n", desc, types, mustexist);
+
+    // Trigger the file browser dialog
+    js_browse_file(desc, types, mustexist);
+
+    // Wait for the dialog to complete (with ASYNCIFY, this will yield to JS)
+    while (!js_browse_is_done()) {
+        emscripten_sleep(100);  // Yield to JavaScript event loop
+    }
+
+    // Get the result
+    result = js_browse_get_result();
+    if (result == NULL) {
+        printf("[BROWSE] File dialog cancelled or no file selected\n");
+        return NULL;
+    }
+
+    // Copy to static buffer (result was malloc'd by JS, we need to free it)
+    strncpy(result_filename, result, sizeof(result_filename) - 1);
+    result_filename[sizeof(result_filename) - 1] = '\0';
+    free(result);
+
+    printf("[BROWSE] Selected file: %s\n", result_filename);
+    return result_filename;
 }
 
 // Port functions
