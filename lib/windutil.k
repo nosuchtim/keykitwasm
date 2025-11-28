@@ -16,7 +16,6 @@ function waitdown(f) {
 }
 
 function waitnsweep(o,type) {
-	print("function waitnsweep")
 	if ( nargs() < 2 ) {
 		print("usage: waitnsweep(obj,type)")
 		return()
@@ -26,7 +25,6 @@ function waitnsweep(o,type) {
 	m = waitdown(f)
 	s = o.sweep(f,type,m)
 	ungrabmousefifo(f)
-	print("waitnsweep return s=",s)
 	return(s)
 }
 
@@ -75,35 +73,26 @@ function fillspace(s,wexisting,dir) {
 	yb = 3
 	dx = maxinc
 	dy = maxinc
-	drawx(s,XOR)
 	while ( 1 ) {
 		any = 0
 		if ( dir!="y" && (s["x0"]-dx-xb) > Root.xmin()
 			&& Root.windowsover(xy(s["x0"]-dx-xb,s["y0"],s["x1"],s["y1"]),wexisting) <= ov ) {
-			drawx(s,XOR)
 			s["x0"] -= dx
-			drawx(s,XOR)
 			any++
 		}
 		if ( dir!="x" && (s["y0"]-dy-yb) > Root.ymin()
 			&& Root.windowsover(xy(s["x0"],s["y0"]-dy-yb,s["x1"],s["y1"]),wexisting) <= ov ) {
-			drawx(s,XOR)
 			s["y0"] -= dy
-			drawx(s,XOR)
 			any++
 		}
 		if ( dir!="y" && (s["x1"]+dx+xb) < Root.xmax()
 			&& Root.windowsover(xy(s["x0"],s["y0"],s["x1"]+dx+xb,s["y1"]),wexisting) <= ov ) {
-			drawx(s,XOR)
 			s["x1"] += dx
-			drawx(s,XOR)
 			any++
 		}
 		if ( dir!="x" && (s["y1"]+dy+yb) < Root.ymax()
 			&& Root.windowsover(xy(s["x0"],s["y0"],s["x1"],s["y1"]+dy+yb),wexisting) <= ov ) {
-			drawx(s,XOR)
 			s["y1"] += dy
-			drawx(s,XOR)
 			any++
 		}
 		if ( ! any ) {
@@ -118,7 +107,6 @@ function fillspace(s,wexisting,dir) {
 			# keep going
 		}
 	}
-	drawx(s,XOR)
 	return(s)
 }
 
@@ -141,9 +129,9 @@ function wresize() {
 			return()
 		}
 	}
-	o.erase()
+	# o.erase()
 	o.resize(sz)
-	o.redraw()
+	Root.redraw()
 }
 
 # dir is either "x" or "y" or "xy"
@@ -294,7 +282,6 @@ function wpastetool() {
 }
 function wmove(o,m,eraseit) {
 
-	print("function wmove called")
 	setmouse(CROSS)
 	f = grabmousefifo()
 
@@ -316,11 +303,7 @@ function wmove(o,m,eraseit) {
 		o.setpermanence(2)
 
 	s = o.size()
-	if ( nargs() < 3 || eraseit!=0 ) {
-		o.erase()
-	}
-	print("Initial XOR of Root.rectangle s=",s)
-	Root.rectangle(s,XOR)
+	initialsize = arraycopy(s)
 	while ( 1 ) {
 		m = get(f)
 		if ( m["button"] == 0 )
@@ -341,29 +324,25 @@ function wmove(o,m,eraseit) {
 		wmx2 = dx + wmx		# in case dx or dy is changed
 		wmy2 = dy + wmy
 
-		Root.rectangle(s,XOR)
 		s["x0"] += dx
 		s["y0"] += dy
 		s["x1"] += dx
 		s["y1"] += dy
-		Root.rectangle(s,XOR)
 		wmx = wmx2
 		wmy = wmy2
+		o.resize(s)
+		Root.redraw()
 	}
-	print("Final XOR of Root.rectangle s=",s)
-	Root.rectangle(s,XOR)
 	s = fit2root(s)
 	o.resize(s)
-	o.redraw()
+	Root.redraw()
 
 	ungrabmousefifo(f)
 	setmouse(ARROW)
 }
 
 function sweeptool(toolfunc,...) {
-	print("Hi from sweeptool!")
 	sz = waitnsweep(Root,SWEEP)
-	print("after waitnsweep, sz=",sz)
 	if ( (sz["x1"]-sz["x0"]) < Toosmallx ) {
 		sz = fillspace(sz,[],"xy")
 		if ( (sz["x1"]-sz["x0"]) < Toosmallx )

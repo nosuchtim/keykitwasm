@@ -68,7 +68,7 @@ function dokeylocal() {
 
 	forcein = "01. Internal MIDI"
 	inp = inport(forcein)
-	print("dokeylocal() is opening MIDI input = "+forcein+" port = "+string(inp))
+	# print("dokeylocal() is opening MIDI input = "+forcein+" port = "+string(inp))
 
 	# KEYOUT environment variable is default output port
 	outportname = mdep("env","get","KEYOUT")

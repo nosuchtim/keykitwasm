@@ -314,7 +314,7 @@ needplotmode(char *meth,Datum d)
 	switch (n) {
 	case P_STORE:
 	case P_CLEAR:
-	case P_XOR:
+	// case P_XOR:
 		break;
 	default:
 		execerror("Bad plot mode (%d) given to %s !?",n,meth);
@@ -418,8 +418,8 @@ o_fill(int argc)
 void
 o_ellipse(int argc)
 {
-	if ( argc > 1 && (int)needplotmode(".ellipse",ARG(1))==P_XOR )
-		execerror("Sorry, ellipse drawing doesn't support XOR mode!");
+	// if ( argc > 1 && (int)needplotmode(".ellipse",ARG(1))==P_XOR )
+	//	execerror("Sorry, ellipse drawing doesn't support XOR mode!");
 	o_lineboxfill(argc,".ellipse",kwindellipse,1);
 	ret(Nullval);
 }
@@ -427,8 +427,8 @@ o_ellipse(int argc)
 void
 o_fillellipse(int argc)
 {
-	if ( argc > 1 && (int)needplotmode(".fillellipse",ARG(1))==P_XOR )
-		execerror("Sorry, ellipse drawing doesn't support XOR mode!");
+	// if ( argc > 1 && (int)needplotmode(".fillellipse",ARG(1))==P_XOR )
+	//	execerror("Sorry, ellipse drawing doesn't support XOR mode!");
 	o_lineboxfill(argc,".fillellipse",kwindfillellipse,1);
 	ret(Nullval);
 }
@@ -487,12 +487,13 @@ o_saveunder(int argc)
 	/* We used to check for multiple saveunders (i.e. without an */
 	/* interveaning restoreunder), but no more. */
 	dummyusage(argc);
-	wid = w->x1 - w->x0 + 1;
-	hgt = w->y1 - w->y0 + 1;
+	wid = w->x1 - w->x0 + 2;
+	hgt = w->y1 - w->y0 + 2;
 	w->saveunder = mdep_allocbitmap(wid,hgt);
 	my_plotmode(P_STORE);
-	mdep_pullbitmap(w->x0,w->y0,w->saveunder);
+	mdep_pullbitmap(w->x0-1,w->y0-1,w->saveunder);
 	w->flags |= WFLAG_SAVEDUNDER;
+	// tprint("o_saveunder window %ld (xy %d,%d size %dx%d)\n",w->wnum,w->x0,w->y0,wid,hgt);
 
 	ret(Nullval);
 }
@@ -506,7 +507,8 @@ o_restoreunder(int argc)
 		if ( argc > 0 )
 			keepit = (int)neednum("restoreunder",ARG(0));
 		my_plotmode(P_STORE);
-		mdep_putbitmap(w->x0,w->y0,w->saveunder);
+		// tprint("o_restoreunder window %ld (xy %dx%d)\n",w->wnum,w->x0,w->y0);
+		mdep_putbitmap(w->x0-1,w->y0-1,w->saveunder);
 		if ( keepit == 0 ) {
 			mdep_freebitmap(w->saveunder);
 			w->flags &= (~WFLAG_SAVEDUNDER);

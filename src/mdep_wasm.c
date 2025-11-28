@@ -514,8 +514,8 @@ int mdep_get_mouse_event(int *x, int *y, int *buttons, int *event_type)
 {
     if (mouse_buffer_count > 0) {
         MouseEvent *event = &mouse_buffer[mouse_buffer_read_pos];
-        *x = event->x;
-        *y = event->y + 4;  // HACK?? Adjust for browser chrome offset
+        *x = event->x + 6;  // HACK?? Adjust for browser offset?
+        *y = event->y + 6;  // HACK?? Adjust for browser offset?
         *buttons = event->buttons;
         *event_type = event->event_type;
 
@@ -1204,6 +1204,12 @@ mdep_color(int c)
     js_set_color(color_list[c]);
 }
 
+int
+mdep_getcolor()
+{
+    return current_color_index;
+}   
+
 void
 mdep_box(int x0, int y0, int x1, int y1)
 {
@@ -1282,7 +1288,7 @@ int
 mdep_startgraphics(int argc, char **argv)
 {
     // Initialize graphics system
-    printf("Initializing KeyKit graphics on Canvas...\n");
+    // printf("Initializing KeyKit graphics on Canvas...\n");
 
     *Colors = KEYNCOLORS;
 	mdep_initcolors();
@@ -1313,17 +1319,7 @@ mdep_startgraphics(int argc, char **argv)
     if (canvas_width <= 0) canvas_width = 1024;
     if (canvas_height <= 0) canvas_height = 768;
 
-    printf("Canvas initialized: %dx%d\n", canvas_width, canvas_height);
-
-	/*
-    // Draw a filled red square in the middle of the canvas as a test
-    int size = 100;
-    int x = (canvas_width - size) / 2;
-    int y = (canvas_height - size) / 2;
-    js_set_fill_color("red");
-    js_fill_rect(x, y, size, size);
-    printf("Drew red square at (%d, %d) size %d\n", x, y, size);
-	*/
+    // printf("Canvas initialized: %dx%d\n", canvas_width, canvas_height);
 
     return 0;
 }
@@ -1351,20 +1347,25 @@ mdep_endgraphics(void)
 void
 mdep_plotmode(int mode)
 {
-    // Set plot mode (for XOR drawing, etc.)
-    // Canvas composite operations:
-    // mode 0 = normal, mode 1 = XOR
-    // sprintf(Msg1,"SETTING PLOTMODE TO %d  !!!!!",mode);
-    // mdep_popup(Msg1);
+    // Set plot mode
     if (mode == 2) {
-        mdep_popup("mdep_plotmode: mode == 2!!!!!!!!!!!!!!!!!");
+        execerror("mdep_plotmode: mode == 2!!!!!!!!!!!!!!!!!");
         js_set_composite_operation("difference");
     } else if (mode == 1) {
         // mdep_popup("mdep_plotmode: mode == 1!!!!!!!!!!!!!!!!!");
-        js_set_composite_operation("difference");
-    } else {
-        // mdep_popup("mdep_plotmode: mode == 0!!!!!!!!!!!!!!!!!");
         js_set_composite_operation("source-over");
+    } else {
+        // execerror("mdep_plotmode: mode == 0!!!!!!!!!!!!!!!!!");
+        // mdep_popup("mdep_plotmode: mode == 0!!!!!!!!!!!!!!!!!");
+        js_set_composite_operation("destination-out");
+
+        // mdep_color(5);
+        // js_set_composite_operation("copy");
+
+        // int c = current_color_index;
+        // mdep_color(0);
+        // js_set_composite_operation("source-over");
+        // mdep_color(c);
     }
 }
 

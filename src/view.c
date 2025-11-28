@@ -5,6 +5,10 @@
 
 #include "key.h"
 
+#ifdef __EMSCRIPTEN__
+extern void js_set_composite_operation(const char *operation);
+#endif
+
 #ifndef MOVEBITMAP
 Pbitmap Tmap = &EmptyBitmap;
 #endif
@@ -75,8 +79,8 @@ void
 drawsweep(Kwind *w,int type,int x0,int y0,int x1,int y1)
 {
 
-	sprintf(Msg1,"drawsweep called, type=%d x0=%d y0=%d x1=%d y1=%d\n",type,x0,y0,x1,y1	);
-	mdep_popup(Msg1);
+	// sprintf(Msg1,"drawsweep called, type=%d x0=%d y0=%d x1=%d y1=%d\n",type,x0,y0,x1,y1	);
+	// mdep_popup(Msg1);
 
 	switch (type) {
 	case M_SWEEP:
@@ -112,6 +116,10 @@ sanequant(Kwind *w,long qnt)
 	return qnt;
 }
 
+int sweep_savecolor;
+int sweep_color = 1;
+int sweep_save_x0, sweep_save_y0, sweep_save_x1, sweep_save_y1;	
+
 void
 dosweepstart(Kwind *w,int type,long x0,long y0,Fifo *mf)
 {
@@ -121,11 +129,10 @@ dosweepstart(Kwind *w,int type,long x0,long y0,Fifo *mf)
 	if ( type==M_ANYWHERE )
 		type = M_SWEEP;
 
+	sweep_savecolor = mdep_getcolor();
 	mdep_setcursor(type);
 
 	fixxy(w,&x0,&y0);
-
-	my_plotmode(P_XOR);
 
 	Pc = (Unchar*)Idosweep;
 
@@ -138,7 +145,15 @@ dosweepstart(Kwind *w,int type,long x0,long y0,Fifo *mf)
 
 	pushexp(numdatum(x0));	/* x1 */
 	pushexp(numdatum(y0));	/* y1 */
-	drawsweep(w,type,(int)x0,(int)y0,(int)x0,(int)y0);
+
+	sweep_save_x0 = (int)x0;
+	sweep_save_y0 = (int)y0;
+	sweep_save_x1 = (int)x0;
+	sweep_save_y1 = (int)y0;
+
+	my_plotmode(P_STORE);
+	// mdep_color(sweep_color);
+	// drawsweep(w,type,(int)x0,(int)y0,(int)x0,(int)y0);
 }
 
 void
@@ -236,6 +251,9 @@ i_dosweepcont(void)
 	mx = x1;
 	my = y1;
 
+	// sprintf(Msg1,"i_dosweepcont: type=%d x0=%d y0=%d x1=%d y1=%d\n",type,x0,y0,x1,y1);	
+	// tprint(Msg1);
+
 	while ( mval !=0 && fifosize(mf)>0 ) {
 		long lmx, lmy;
 		d = removedatafromfifo(mf);
@@ -245,15 +263,36 @@ i_dosweepcont(void)
 		mx = (int)lmx; my = (int)lmy;
 	}
 
+	// js_set_composite_operation("source-over");
+	// js_set_composite_operation("copy");
+	js_set_composite_operation("source-over");
+	// mdep_color(sweep_color);
+	mdep_color(0);
+	// drawsweep(w,type,x0,y0,x1,y1);
+	// drawsweep(w,type,sweep_save_x0,sweep_save_y0,sweep_save_x1,sweep_save_y1);
+	mdep_boxfill(sweep_save_x0,sweep_save_y0,sweep_save_x1,sweep_save_y1);
+
 	if ( mval != 0 ) {
 		changed = (mx!=x1 || my!=y1);
 		if ( changed ) {
-			my_plotmode(P_XOR);
-			drawsweep(w,type,x0,y0,x1,y1);
-			drawsweep(w,type,x0,y0,mx,my);
-			my_plotmode(P_STORE);
+
+			// js_set_composite_operation("source-over");
+			// mdep_color(8);
+
 			(Stackp-2)->u.val = mx;
 			(Stackp-1)->u.val = my;
+
+			sweep_save_x0 = x0;
+			sweep_save_y0 = y0;
+			sweep_save_x1 = mx;
+			sweep_save_y1 = my;
+
+			// js_set_composite_operation("source-over");
+			mdep_color(sweep_color);
+			js_set_composite_operation("source-over");
+			drawsweep(w,type,sweep_save_x0,sweep_save_y0,sweep_save_x1,sweep_save_y1);
+
+			// drawsweep(w,type,x0,y0,x1,y1);
 		}
 		setpc(i);	/* loop back to i_dosweepcont() */
 		mouseblock(mf);
@@ -261,9 +300,16 @@ i_dosweepcont(void)
 	}
 	/* sweep has ended */
 
-	my_plotmode(P_XOR);
-	drawsweep(w,type,x0,y0,x1,y1);
-	my_plotmode(P_STORE);
+	// mdep_color(0);
+	// mdep_color(sweep_savecolor);
+	// drawsweep(w,type,sweep_save_x0,sweep_save_y0,sweep_save_x1,sweep_save_y1);
+	// drawsweep(w,type,x0,y0,x1,y1);
+
+	mdep_color(0);
+	// drawsweep(w,type,x0,y0,x1,y1);
+	// drawsweep(w,type,sweep_save_x0,sweep_save_y0,sweep_save_x1,sweep_save_y1);
+	mdep_boxfill(sweep_save_x0,sweep_save_y0,sweep_save_x1,sweep_save_y1);
+	mdep_color(sweep_savecolor);
 
 	mdep_setcursor(M_ARROW);
 

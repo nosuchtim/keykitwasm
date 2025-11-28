@@ -32,8 +32,10 @@ wredraw1(Kwind *w)
 		redrawpwind(w);
 	if ( w->type == WIND_TEXT )
 		redrawtext(w);
-	if ( w->type == WIND_MENU )
+	if ( w->type == WIND_MENU ) {
+		// tprint("wredraw1: WIND_MENU redraw hack\n");
 		redrawmenu(w);
+	}
 	w->flags |= WFLAG_DRAWN;
 
 	/* We always move freshly-drawn windows to the top, so when we */

@@ -45,8 +45,10 @@ method youarefreetogo {
 			if ( $.notify != $0 && $.notify != $-1 )
 				$.notify.submenudone()
 			$.deleteme()
-			if ( tobefreed!=$0 && tobefreed!=$-1 )
+			if ( tobefreed!=$0 && tobefreed!=$-1 ) {
+				# print("youarefreetogo calling recursive tobefreed")
 				tobefreed.youarefreetogo()
+			}
 		}
 }
 method findsubmenu (sb) {
@@ -119,14 +121,19 @@ method setnotify(o) {
 
 method undraw() {
 	if ( $.saved ) {
+		# print("wmenu.undraw calling restoreunder $=",$)
+		# print(taskinfo(gettid(),"fulltrace"))
 		$.restoreunder()
 		$.saved = 0
 	}
 	else {
 		$.erase()
 	}
-	if ( $ in Root.children() )
+	if ( $ in Root.children() ) {
+		# print("wmenu.undraw calling removechild $=",$)
 		Root.removechild($)
+		# print("wmenu.undraw AFTER Root.removechild")
+	}
 }
 
 method redrawfirst(saveit) {
@@ -166,6 +173,7 @@ method waitup() {
 
 method mousedown(m,nomove) {
 
+    # print("mousedown START")
 	if ( nargs()<2 )
 		nomove = 0
 
@@ -190,6 +198,7 @@ method mousedown(m,nomove) {
 		if ( !nomove ) {
 			neederase = 1
 			if ( $.saved ) {
+				# print("MENU_MOVE calling restoreunder $=",$)
 				$.restoreunder()
 				$.saved = 0
 				neederase = 0
@@ -225,6 +234,7 @@ method mousedown(m,nomove) {
 	else {
 		$.setchoice(newchoice,m)
 	}
+    # print("mousedown END")
 }
 
 method submenustart(mkfunc,args,sz) {
@@ -359,7 +369,9 @@ method mouseup(m) {
 		ungrabmouse($)
 		# but don't actually delete it unless we're still over the X
 		if ( choiceis == MENU_DELETE ) {
+			# print("MOUSEUP is calling undraw $=",$)
 			$.undraw()	# This will do the Root.removechild()
+			# print("MOUSEUP AFTER calling undraw $=",$)
 			$.deleteme()
 		}
 		return()
@@ -411,6 +423,10 @@ method mouseup(m) {
 method deleteme() {
 	if ( $ == Activemenu )
 		Activemenu = $0
+	# print("DELETEME is calling deleteobject $=",$)
 	deleteobject($)
+	# print("AFTER calling deleteobject $=",$)
+
+	Root.redraw() # hack to clean up graphic garbage
 }
 }
