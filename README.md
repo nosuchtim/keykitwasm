@@ -1,12 +1,11 @@
 # KeyKit WebAssembly
 
-A WebAssembly port of **KeyKit**, the algorithmic music programming language and MIDI toolkit originally created by Tim Thompson at AT&T Bell Labs.
-
-KeyKit is a powerful environment for music composition, MIDI processing, and interactive graphics. This port enables KeyKit to run directly in web browsers using Emscripten and modern web APIs.
+This is a WebAssembly port of **KeyKit**, enabling KeyKit to run directly in web browsers using Emscripten and modern web APIs.
 
 ## What is KeyKit?
 
-KeyKit is a programming language and graphical toolkit for MIDI. Key capabilities include:
+KeyKit is a programming language and graphical toolkit for MIDI manipulation and experimentation, originally created by Tim Thompson at AT&T Bell Labs.
+Key capabilities include:
 
 - **Algorithmic Composition** - Generate music programmatically
 - **MIDI Processing** - Real-time manipulation of MIDI streams
@@ -23,18 +22,11 @@ Originally released in 1996, KeyKit has been used by musicians and composers wor
 - **HTML5 Canvas Graphics** - Interactive graphics with drawing primitives, colors, and bitmap operations
 - **Web MIDI API** - Real-time MIDI input/output with browser-connected devices
 - **Virtual Filesystem** - Runtime loading of 390+ library files
-
-## Prerequisites
-
-- [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html)
-- Python 3.x
-- A web browser with Web MIDI support (Chrome, Edge, Opera)
-
-## Local Directory
-
-To allow the saving of things, the local directory is synced with the virtual /keykit/local directory.  MIDI (\*.mid) files go in local/music, and pages (\*.kp) go in local/pages.
+- **Synced Local Directory** - Files can be written to the local directory, which is synced with the virtual filesystem.
 
 ## Building
+
+Install [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html) and Python 3.x, then
 
 ```bash
 cd src
@@ -77,15 +69,12 @@ keykitwasm/
 ## Architecture
 
 KeyKit uses a **machine-dependent abstraction layer** to isolate platform-specific code. The WebAssembly port implements ~60 `mdep_*` functions in `src/mdep_wasm.c` that interface with JavaScript via Emscripten's `EM_ASM` macros.
-
-This repo is a stripped-down version of the nosuchtim/keykit repo, with only the WASM port and other updates that are specific and hard-coded.
-
-## JavaScript Interop
-
 The port uses two integration methods:
 
 1. **EM_ASM** - Inline JavaScript in C for simple operations
 2. **JavaScript Library** - `keykit_library.js` for complex features (Canvas, MIDI)
+
+This repo is a stripped-down version of the https://github.com/nosuchtim/keykit repo, with only the WASM port and updates needed for that environment.
 
 ## MIDI Setup
 
