@@ -168,8 +168,15 @@
 </head>
 <body>
     <div id="container">
-        <h1>🎹 KeyKit WebAssembly</h1>
-        <p class="subtitle">Music Programming Language in Your Browser</p>
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 10px;">
+            <h1 style="margin: 0;">🎹 KeyKit</h1>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button id="connect-local-btn" onclick="if(window.requestLocalDirAccess) requestLocalDirAccess().then(ok => { if(ok && window.updateSyncStatus) updateSyncStatus(); }); else alert('Please wait for KeyKit to finish loading');" style="padding: 5px 15px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Connect Local Folder
+                </button>
+                <span id="sync-status-text" style="color: #888;">Loading...</span>
+            </div>
+        </div>
 
         <div class="info-box">
             <h3>Getting Started</h3>
@@ -188,22 +195,8 @@
             </div>
         </div>
 
-        <div id="local-sync-status" style="margin: 10px 0; text-align: center;">
-            <button id="connect-local-btn" onclick="if(window.requestLocalDirAccess) requestLocalDirAccess().then(ok => { if(ok && window.updateSyncStatus) updateSyncStatus(); }); else alert('Please wait for KeyKit to finish loading');" style="padding: 5px 15px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                Connect Local Folder
-            </button>
-            <span id="sync-status-text" style="margin-left: 10px; color: #888;">Loading...</span>
-        </div>
-
         <div id="canvas-container">
             <canvas id="keykit-canvas" tabindex="0"></canvas>
-        </div>
-
-        <h3>Console Output</h3>
-        <div id="output"></div>
-
-        <div class="info-box">
-            <h3>Console Output (hidden)</h3>
         </div>
 
         <div class="info-box">
@@ -341,7 +334,7 @@
                     const manifestController = new AbortController();
                     const manifestTimeout = setTimeout(() => manifestController.abort(), 10000);
 
-                    const response = await fetch('../lib/lib_manifest.json', {
+                    const response = await fetch('lib/lib_manifest.json', {
                         signal: manifestController.signal
                     });
                     clearTimeout(manifestTimeout);
@@ -358,7 +351,7 @@
 
                         await Promise.all(batch.map(async (filename) => {
                             try {
-                                const fileResponse = await fetch(`../lib/${filename}`);
+                                const fileResponse = await fetch(`lib/${filename}`);
                                 if (!fileResponse.ok) {
                                     throw new Error(`HTTP ${fileResponse.status}`);
                                 }
@@ -424,7 +417,7 @@
 
                     // Load page files from manifest (only if not already in IndexedDB)
                     try {
-                        const pagesResponse = await fetch('../local/pages/pages_manifest.json');
+                        const pagesResponse = await fetch('local/pages/pages_manifest.json');
                         const pageFiles = await pagesResponse.json();
                         console.log(`Found ${pageFiles.length} page files in manifest`);
 
@@ -441,7 +434,7 @@
                                 continue;
                             }
                             try {
-                                const fileResponse = await fetch(`../local/pages/${filename}`);
+                                const fileResponse = await fetch(`local/pages/${filename}`);
                                 const content = await fileResponse.arrayBuffer();
                                 const uint8Array = new Uint8Array(content);
                                 Module.FS.writeFile(`/keykit/local/pages/${filename}`, uint8Array);
@@ -675,7 +668,7 @@
                     console.log('Created /keykit/music directory');
 
                     try {
-                        const musicResponse = await fetch('../music/music_manifest.json');
+                        const musicResponse = await fetch('music/music_manifest.json');
                         const musicFiles = await musicResponse.json();
                         console.log(`Found ${musicFiles.length} music files in manifest`);
 
@@ -685,7 +678,7 @@
 
                             await Promise.all(batch.map(async (filename) => {
                                 try {
-                                    const fileResponse = await fetch(`../music/${filename}`);
+                                    const fileResponse = await fetch(`music/${filename}`);
                                     const content = await fileResponse.arrayBuffer();
                                     const uint8Array = new Uint8Array(content);
 

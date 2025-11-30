@@ -21,29 +21,22 @@ Key capabilities include:
 - **Virtual Filesystem** - Runtime loading of 390+ library files
 - **Synced Local Directory** - Files can be written to the local directory, which is synced with the virtual filesystem.
 
-## Building
+## Building and Running
 
 Install [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html) and Python 3.x, then
 
 ```bash
-cd src
-python build_wasm.py
+python create_dist.py dist/keykitwasm
+# in order to create dist/keykitwasm.zip, then
+cd dist
+unzip keykitwasm.zip
+python keykitwasm/serve.py
+# In a WebMIDI-enabled browser, go to 127.0.0.1:8000/keykitwasm/keykit.html
+
 ```
 
-This compiles the KeyKit C source to WebAssembly, producing:
-- `keykit.html` - Main application page
-- `keykit.js` - JavaScript runtime
-- `keykit.wasm` - WebAssembly binary
-
-## Running
-
-Start a local web server (required for loading library files):
-
-```bash
-python serve.py
-```
-
-Then open `http://localhost:8000/keykit.html` in your browser.  Use the "Change local folder" button to attach the local directory you want to use.
+By default, it assumes the <a href="https://springbeats.com/sbvmidi">Springbeats Virtual MIDI Cable driver</a> is installed; MIDI output is connected to "Springbeats vMIDI1" and MIDI input is connected to "Springbeats vMIDI2".
+Use the "Change Local Folder" button to attach the local directory you want to use.
 
 ## Project Structure
 
@@ -95,3 +88,5 @@ The `music` directory includes sample MIDI files for testing:
 ## Issues
 
 - Sweeping operations are ugly due to the lack of real XOR graphics.
+- If the keykit GUI doesn't show up (e.g. when you resize the browser), refresh the browser page.
+- See the browser's Console for error messages.

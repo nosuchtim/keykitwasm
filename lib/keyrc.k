@@ -66,14 +66,12 @@ function addpostrc(f) {
 #desc	and if that doesn't exist, use some defaults
 function dokeylocal() {
 
-	# forcein = "01. Internal MIDI"
-
-	forcein = "loopMIDI Port 2"
-	inp = inport(forcein)
-
-	forceout = "loopMIDI Port 1"
+	forceout = "Springbeats vMIDI1"
 	outp = outport(forceout)
 	
+	forcein = "Springbeats vMIDI2"
+	inp = inport(forcein)
+
 	# print("dokeylocal() is opening MIDI input = "+forcein+" port = "+string(inp))
 
 	# KEYOUT environment variable is default output port
