@@ -172,7 +172,7 @@
 <body>
     <div id="container">
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 10px;">
-            <h1 style="margin: 0;">🎹 KeyKit</h1>
+            <h1 style="margin: 0; display: flex; align-items: center; gap: 10px;"><img src="keykit.ico" alt="" style="width: 40px; height: 40px;"> KeyKit</h1>
             <div style="display: flex; align-items: center; gap: 10px;">
                 <button id="connect-local-btn" onclick="if(window.requestLocalDirAccess) requestLocalDirAccess().then(ok => { if(ok && window.updateSyncStatus) updateSyncStatus(); }); else alert('Please wait for KeyKit to finish loading');" style="padding: 5px 15px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
                     Connect Local Folder

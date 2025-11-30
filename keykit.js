@@ -5459,11 +5459,23 @@ async function createWasm() {
               return mod;
           }
   
+          // Helper to convert screen coordinates to canvas coordinates
+          // This accounts for CSS scaling of the canvas
+          function screenToCanvas(e) {
+              var rect = canvas.getBoundingClientRect();
+              var scaleX = canvas.width / rect.width;
+              var scaleY = canvas.height / rect.height;
+              return {
+                  x: Math.floor((e.clientX - rect.left) * scaleX),
+                  y: Math.floor((e.clientY - rect.top) * scaleY)
+              };
+          }
+  
           // Mouse move event
           canvas.addEventListener('mousemove', function(e) {
-              var rect = canvas.getBoundingClientRect();
-              window.keykitMouseX = Math.floor(e.clientX - rect.left);
-              window.keykitMouseY = Math.floor(e.clientY - rect.top);
+              var pos = screenToCanvas(e);
+              window.keykitMouseX = pos.x;
+              window.keykitMouseY = pos.y;
               window.keykitMouseModifiers = getModifierBits(e);
   
               // Call C callback if defined
@@ -5476,9 +5488,9 @@ async function createWasm() {
   
           // Mouse button events
           canvas.addEventListener('mousedown', function(e) {
-              var rect = canvas.getBoundingClientRect();
-              window.keykitMouseX = Math.floor(e.clientX - rect.left);
-              window.keykitMouseY = Math.floor(e.clientY - rect.top);
+              var pos = screenToCanvas(e);
+              window.keykitMouseX = pos.x;
+              window.keykitMouseY = pos.y;
               window.keykitMouseModifiers = getModifierBits(e);
   
               // Set button bit (0=left, 1=middle, 2=right)
@@ -5492,9 +5504,9 @@ async function createWasm() {
           });
   
           canvas.addEventListener('mouseup', function(e) {
-              var rect = canvas.getBoundingClientRect();
-              window.keykitMouseX = Math.floor(e.clientX - rect.left);
-              window.keykitMouseY = Math.floor(e.clientY - rect.top);
+              var pos = screenToCanvas(e);
+              window.keykitMouseX = pos.x;
+              window.keykitMouseY = pos.y;
               window.keykitMouseModifiers = getModifierBits(e);
   
               // Clear button bit
