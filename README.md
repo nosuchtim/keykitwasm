@@ -69,7 +69,10 @@ The port uses two integration methods:
 
 ## MIDI Setup
 
-KeyKit works with any Web MIDI compatible device. For virtual MIDI routing on Windows, use [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html).  Some of the files (e.g. lib/keyrc.k) are hard-coded to open "loopMIDI Port 1" for output and "loopMIDI Port 2" for input.
+KeyKit works with any Web MIDI compatible device.
+For virtual MIDI routing on Windows,
+use <a href="https://springbeats.com/sbvmidi">Springbeats Virtual MIDI Cable driver</a>.
+Some of the files (e.g. lib/keyrc.k) are hard-coded to open "Springbeats vMIDI1" for output and "Springbeats vMIDI2" for input.
 
 The browser will prompt for MIDI access when the application starts. Grant permission to enable MIDI input/output.
 
