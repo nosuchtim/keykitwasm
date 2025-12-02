@@ -44,28 +44,32 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 90%;
-            max-width: 1200px;
+            width: 1024px;
             margin: 0 auto;
             padding-bottom: 40px;
         }
 
         #canvas-container {
             position: relative;
-            width: 100%;
+            width: 1024px;
+            min-width: 1024px;
+            max-width: 1024px;
+            height: 768px;
+            min-height: 768px;
+            max-height: 768px;
             margin: 20px 0;
             border: 3px solid #4CAF50;
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
             background: #000;
+            flex-shrink: 0;
         }
 
         #keykit-canvas {
             display: block;
-            width: 100%;
-            height: auto;
-            max-height: 80vh;
-            border-radius: 5px;
+            width: 1024px;
+            height: 768px;
+            /* No border-radius on canvas to avoid coordinate issues */
             /* Use auto for smooth text rendering instead of pixelated */
             image-rendering: auto;
             /* Enable font smoothing for better text quality */
@@ -174,6 +178,11 @@
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 10px;">
             <h1 style="margin: 0; display: flex; align-items: center; gap: 10px;"><img src="keykit.ico" alt="" style="width: 40px; height: 40px;"> KeyKit</h1>
             <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="color: #888; margin-right: 5px;">Size:</span>
+                <button class="size-btn" onclick="setCanvasSize(1024, 768)" style="padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">1024x768</button>
+                <button class="size-btn" onclick="setCanvasSize(1200, 800)" style="padding: 5px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">1200x800</button>
+                <button class="size-btn" onclick="setCanvasSize(1920, 1080)" style="padding: 5px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">1920x1080</button>
+                <span style="margin: 0 10px; color: #444;">|</span>
                 <button id="connect-local-btn" onclick="if(window.requestLocalDirAccess) requestLocalDirAccess().then(ok => { if(ok && window.updateSyncStatus) updateSyncStatus(); }); else alert('Please wait for KeyKit to finish loading');" style="padding: 5px 15px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
                     Connect Local Folder
                 </button>
@@ -199,7 +208,7 @@
         </div>
 
         <div id="canvas-container">
-            <canvas id="keykit-canvas" tabindex="0"></canvas>
+            <canvas id="keykit-canvas" width="1024" height="768" tabindex="0"></canvas>
         </div>
 
         <div class="info-box">
@@ -218,9 +227,6 @@
     <script type="text/javascript">
         // Flag to track if WASM runtime is fully initialized
         var wasmRuntimeReady = false;
-
-        // Debounce timer for resize events
-        var resizeDebounceTimer = null;
 
         // Function to initialize MIDI before main()
         function initMIDI() {
@@ -825,56 +831,105 @@
             return false;
         };
 
-        // Resize canvas to match container width with 4:3 aspect ratio
-        function resizeCanvas() {
+        // Current canvas size
+        var currentCanvasWidth = 1024;
+        var currentCanvasHeight = 768;
+
+        // Function to set canvas size (called by size buttons)
+        function setCanvasSize(width, height) {
             var canvas = document.getElementById('keykit-canvas');
             var container = document.getElementById('canvas-container');
+            var mainContainer = document.getElementById('container');
             if (!canvas || !container) {
-                console.warn('Canvas or container not found, skipping resize');
+                console.warn('Canvas or container not found');
                 return;
             }
 
-            var containerWidth = container.clientWidth;
-            if (containerWidth <= 0) {
-                console.warn('Container width is zero, skipping resize');
+            // Update current size
+            currentCanvasWidth = width;
+            currentCanvasHeight = height;
+
+            // Update canvas dimensions (this clears the canvas and resets context state)
+            canvas.width = width;
+            canvas.height = height;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+
+            // Restore canvas context state after resize (canvas resize resets all context properties)
+            var ctx = canvas.getContext('2d');
+            if (window.keykitCurrentFont) {
+                ctx.font = window.keykitCurrentFont;
+            }
+            if (window.keykitCurrentStrokeColor) {
+                ctx.strokeStyle = window.keykitCurrentStrokeColor;
+            }
+            if (window.keykitCurrentFillColor) {
+                ctx.fillStyle = window.keykitCurrentFillColor;
+            }
+            if (window.keykitCurrentLineWidth) {
+                ctx.lineWidth = window.keykitCurrentLineWidth;
+            }
+
+            // Update container dimensions
+            container.style.width = width + 'px';
+            container.style.minWidth = width + 'px';
+            container.style.maxWidth = width + 'px';
+            container.style.height = height + 'px';
+            container.style.minHeight = height + 'px';
+            container.style.maxHeight = height + 'px';
+
+            // Update main container width
+            mainContainer.style.width = Math.max(width, 1024) + 'px';
+
+            // Update button highlighting
+            var buttons = document.querySelectorAll('.size-btn');
+            buttons.forEach(function(btn) {
+                if (btn.textContent === width + 'x' + height) {
+                    btn.style.background = '#4CAF50';
+                } else {
+                    btn.style.background = '#666';
+                }
+            });
+
+            console.log('[CANVAS] Canvas resized to ' + width + 'x' + height);
+
+            // Notify C code of canvas size change
+            if (wasmRuntimeReady && typeof Module !== 'undefined' && Module._mdep_on_window_resize) {
+                try {
+                    Module._mdep_on_window_resize(width, height);
+                    console.log('[CANVAS] Notified C code of resize');
+                } catch (e) {
+                    console.error('[CANVAS] Error calling C callback:', e);
+                }
+            }
+        }
+
+        // Initialize canvas to default size
+        function resizeCanvas() {
+            var canvas = document.getElementById('keykit-canvas');
+            if (!canvas) {
+                console.warn('Canvas not found, skipping initialization');
                 return;
             }
 
-            // Maintain 4:3 aspect ratio
-            var canvasWidth = containerWidth;
-            var canvasHeight = Math.floor(containerWidth * 3 / 4);
-
-            // Only resize if dimensions actually changed (resizing clears the canvas)
-            var needsResize = (canvas.width !== canvasWidth || canvas.height !== canvasHeight);
+            // Only set if dimensions are different (setting dimensions clears the canvas)
+            var needsResize = (canvas.width !== currentCanvasWidth || canvas.height !== currentCanvasHeight);
 
             if (needsResize) {
-                canvas.width = canvasWidth;
-                canvas.height = canvasHeight;
-                console.log('[RESIZE] Canvas dimensions changed to ' + canvas.width + 'x' + canvas.height);
+                canvas.width = currentCanvasWidth;
+                canvas.height = currentCanvasHeight;
+                console.log('[CANVAS] Canvas initialized to ' + canvas.width + 'x' + canvas.height);
 
-                // Debounce the notification to C code - wait 200ms after last resize
-                if (resizeDebounceTimer) {
-                    console.log('[RESIZE] Canceling previous debounce timer');
-                    clearTimeout(resizeDebounceTimer);
-                }
-
-                console.log('[RESIZE] Starting 200ms debounce timer');
-                resizeDebounceTimer = setTimeout(function() {
-                    console.log('[RESIZE] Debounce timer expired, notifying C code');
-                    // Notify C code of resize event (only if runtime is fully initialized)
-                    if (wasmRuntimeReady && typeof Module !== 'undefined' && Module._mdep_on_window_resize) {
-                        try {
-                            console.log('[RESIZE] Calling Module._mdep_on_window_resize(' + canvasWidth + ', ' + canvasHeight + ')');
-                            Module._mdep_on_window_resize(canvasWidth, canvasHeight);
-                            console.log('[RESIZE] Successfully notified C code');
-                        } catch (e) {
-                            console.error('[RESIZE] Error calling C callback:', e);
-                        }
-                    } else {
-                        console.warn('[RESIZE] Cannot notify C code - runtime not ready or function not available');
+                // Notify C code of canvas size (only if runtime is fully initialized)
+                if (wasmRuntimeReady && typeof Module !== 'undefined' && Module._mdep_on_window_resize) {
+                    try {
+                        console.log('[CANVAS] Calling Module._mdep_on_window_resize(' + currentCanvasWidth + ', ' + currentCanvasHeight + ')');
+                        Module._mdep_on_window_resize(currentCanvasWidth, currentCanvasHeight);
+                        console.log('[CANVAS] Successfully notified C code');
+                    } catch (e) {
+                        console.error('[CANVAS] Error calling C callback:', e);
                     }
-                    resizeDebounceTimer = null;
-                }, 200);
+                }
             }
         }
 
@@ -885,10 +940,7 @@
             setTimeout(resizeCanvas, 100);
         });
 
-        // Resize canvas when window is resized
-        window.addEventListener('resize', function() {
-            resizeCanvas();
-        });
+        // Note: Canvas is fixed at 1024x768, no resize handling needed
 
         // Helper function to print stack trace from console
         window.printStackTrace = function() {

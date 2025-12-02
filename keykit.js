@@ -4973,6 +4973,9 @@ async function createWasm() {
           var canvas = document.getElementById('keykit-canvas');
           if (!canvas) return;
           var ctx = canvas.getContext('2d');
+          // Use default 'alphabetic' baseline - y coordinate is the text baseline
+          ctx.textBaseline = 'alphabetic';
+          ctx.textAlign = 'left';
           ctx.fillText(UTF8ToString(text), x, y);
       }
 
@@ -5346,6 +5349,9 @@ async function createWasm() {
           var colorStr = UTF8ToString(color);
           ctx.strokeStyle = colorStr;
           ctx.fillStyle = colorStr;
+          // Save colors globally so they can be restored after canvas resize
+          window.keykitCurrentStrokeColor = colorStr;
+          window.keykitCurrentFillColor = colorStr;
       }
 
   function _js_set_composite_operation(operation) {
@@ -5374,7 +5380,10 @@ async function createWasm() {
           var canvas = document.getElementById('keykit-canvas');
           if (!canvas) return;
           var ctx = canvas.getContext('2d');
-          ctx.font = UTF8ToString(font);
+          var fontStr = UTF8ToString(font);
+          ctx.font = fontStr;
+          // Save the font globally so it can be restored after canvas resize
+          window.keykitCurrentFont = fontStr;
       }
 
   function _js_setup_keyboard_events() {
@@ -5466,8 +5475,8 @@ async function createWasm() {
               var scaleX = canvas.width / rect.width;
               var scaleY = canvas.height / rect.height;
               return {
-                  x: Math.floor((e.clientX - rect.left) * scaleX),
-                  y: Math.floor((e.clientY - rect.top) * scaleY)
+                  x: Math.round((e.clientX - rect.left) * scaleX) - 4,
+                  y: Math.round((e.clientY - rect.top) * scaleY) - 4
               };
           }
   

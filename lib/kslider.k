@@ -129,6 +129,9 @@ method mousemove(m) {
 method mousedown(m) {
 	$.mousedrag(m)
 }
+method mouseup(m) {
+	Root.redraw()  # HACK!  CLEAR of old lines doesn't seem to work?
+}
 method autotask(m)  {
 	$.taskstart = Now
 	my = m["y"]

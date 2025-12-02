@@ -2257,7 +2257,7 @@ bi_midi(int argc)
 				goto getout;
 			}
 
-			if ( ! validinputport(portno) ) {
+			if ( ! validoutputport(portno) ) {
 				eprint("midi: invalid output port number %d !?\n",portno);
 				goto getout;
 			}

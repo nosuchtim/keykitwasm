@@ -1039,7 +1039,9 @@ mdep_waitfor(int millimsecs)
         // Update cached canvas dimensions
         canvas_width = last_canvas_width;
         canvas_height = last_canvas_height;
-        return K_WINDRESIZE;
+        // Return both WINDRESIZE and WINDEXPOSE because HTML5 canvas clears
+        // its content when resized, requiring a full redraw
+        return K_WINDRESIZE | K_WINDEXPOSE;
     }
 
 	if ( mdep_statconsole() ) {

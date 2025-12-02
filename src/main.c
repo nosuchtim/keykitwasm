@@ -1177,9 +1177,22 @@ pinclude(char *s)
 	char *p, *p1 = NULL;
 	char *fname;
 
+	/* Safety check for null input */
+	if ( s == NULL ) {
+		eprint("#include: null input string\n");
+		return;
+	}
+
 	/* isolate the file name (getting rid of quotes) */
 	while ( isspace(*s) )
 		s++;
+
+	/* Check if empty after skipping whitespace */
+	if ( *s == '\0' ) {
+		eprint("#include: missing filename\n");
+		return;
+	}
+
 	if ( *s == '"' ) {
 		p1 = ++s;
 		for ( p=p1; *p; p++ ) {
@@ -1198,6 +1211,13 @@ pinclude(char *s)
 			}
 		}
 	}
+
+	/* Check if filename is empty */
+	if ( p1 == NULL || *p1 == '\0' ) {
+		eprint("#include: empty filename\n");
+		return;
+	}
+
 	fname = kpathsearch(p1);
 	if ( fname ) {
 		FILE *f;
@@ -1542,6 +1562,15 @@ kpathsearch(char *fname)
 	static char **pathparts = NULL;
 	static char *lastkeypath = NULL;
 	static char *pathfname = NULL;	/* result is kept here */
+
+	/* Safety checks */
+	if ( fname == NULL || *fname == '\0' ) {
+		return NULL;
+	}
+	if ( Keypath == NULL || *Keypath == NULL ) {
+		eprint("kpathsearch: Keypath not initialized\n");
+		return NULL;
+	}
 
 	return pathsearch(fname,&pathsize,&pathparts,
 			&lastkeypath,&pathfname,Keypath,(PATHFUNC)NULL);
