@@ -1494,6 +1494,11 @@ uniqstr(char *s)
 	Hnodep h, toph;
 	int v;
 
+	if ( s == NULL ) {
+		eprint("uniqstr: NULL string passed!\n");
+		s = "";
+	}
+
 	if ( Stringtable == NULL ) {
 		char *p = getenv("STRHASHSIZE");
 		Stringtable = newht( p ? atoi(p) : 1009 );

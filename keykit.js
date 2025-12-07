@@ -4932,6 +4932,51 @@ async function createWasm() {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
 
+  function _js_clear_local_data() {
+          function deleteContents(path) {
+              try {
+                  var entries = Module.FS.readdir(path);
+                  for (var i = 0; i < entries.length; i++) {
+                      var entry = entries[i];
+                      if (entry === '.' || entry === '..') continue;
+                      var fullPath = path + '/' + entry;
+                      try {
+                          var stat = Module.FS.stat(fullPath);
+                          if (Module.FS.isDir(stat.mode)) {
+                              deleteContents(fullPath);
+                              Module.FS.rmdir(fullPath);
+                          } else {
+                              Module.FS.unlink(fullPath);
+                          }
+                      } catch (err) {
+                          console.warn('Could not delete ' + fullPath + ':', err);
+                      }
+                  }
+              } catch (err) {
+                  // Directory may not exist
+              }
+          }
+  
+          try {
+              deleteContents('/keykit/local');
+              console.log('[FS] Cleared all local data');
+  
+              // Recreate subdirectories
+              try { Module.FS.mkdir('/keykit/local/pages'); } catch (err) {}
+              try { Module.FS.mkdir('/keykit/local/music'); } catch (err) {}
+              try { Module.FS.mkdir('/keykit/local/lib'); } catch (err) {}
+  
+              // Sync to IndexedDB
+              if (window.scheduleLocalSync) {
+                  window.scheduleLocalSync();
+              }
+              return 0;
+          } catch (err) {
+              console.error('[FS] Failed to clear local data:', err);
+              return -1;
+          }
+      }
+
   function _js_close_midi_input(index) {
           if (!window.midiInputs || index < 0 || index >= window.midiInputs.length) {
               return -1;
@@ -5317,6 +5362,14 @@ async function createWasm() {
           } catch (e) {
               console.error('js_put_image_data error:', e);
           }
+      }
+
+  function _js_schedule_sync() {
+          if (window.scheduleLocalSync) {
+              window.scheduleLocalSync();
+              return 0;
+          }
+          return -1;
       }
 
   function _js_send_midi_output(index, data_ptr, data_len) {
@@ -6771,6 +6824,8 @@ var wasmImports = {
   /** @export */
   js_clear_canvas: _js_clear_canvas,
   /** @export */
+  js_clear_local_data: _js_clear_local_data,
+  /** @export */
   js_close_midi_input: _js_close_midi_input,
   /** @export */
   js_draw_ellipse: _js_draw_ellipse,
@@ -6816,6 +6871,8 @@ var wasmImports = {
   js_open_midi_input: _js_open_midi_input,
   /** @export */
   js_put_image_data: _js_put_image_data,
+  /** @export */
+  js_schedule_sync: _js_schedule_sync,
   /** @export */
   js_send_midi_output: _js_send_midi_output,
   /** @export */

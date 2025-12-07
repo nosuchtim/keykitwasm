@@ -67,6 +67,9 @@ extern char *js_browse_get_result(void);
 // Host OS detection
 extern int js_get_host_os(char *buffer, int buffer_size);
 
+// Clear local data
+extern int js_clear_local_data(void);
+
 // Global state for graphics
 static int current_color_index = 0;
 static int canvas_width = 1024;

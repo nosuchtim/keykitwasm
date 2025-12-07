@@ -1513,6 +1513,23 @@ bi_coreleft(int argc)
 	ret(d);
 }
 
+#ifdef __EMSCRIPTEN__
+extern int js_clear_local_data(void);
+#endif
+
+void
+bi_clearlocal(int argc)
+{
+	int r = -1;
+
+	if ( argc != 0 )
+		execerror("usage: clearlocal()");
+#ifdef __EMSCRIPTEN__
+	r = js_clear_local_data();
+#endif
+	ret(numdatum((long)r));
+}
+
 void
 bi_currtime(int argc)
 {
@@ -2902,6 +2919,7 @@ struct bltinfo builtins[] = {
 	{ "midi",		bi_midi,	BI_MIDI },
 	{ "bitmap",	bi_bitmap,	BI_BITMAP },
 	{ "objectinfo",	bi_objectinfo,	BI_OBJECTINFO },
+	{ "clearlocal",	bi_clearlocal,	BI_CLEARLOCAL },
 	{ 0,		0,		0 }
 };
 
@@ -3035,5 +3053,6 @@ BLTINFUNC Bltinfuncs[] = {
 	bi_midi,
 	bi_bitmap,
 	bi_objectinfo,
-	o_fillpolygon
+	o_fillpolygon,
+	bi_clearlocal
 };

@@ -69,18 +69,20 @@ function dokeylocal() {
  	# Open the first available input/output port from a preferred list
 
  	preferred_outputs = [
-		0="loopMIDI Port 1",    # loopMIDI
-		1="01. Internal MIDI",  # LoopBe
- 		2="IAC Driver Bus 1",   # macOS
- 		3="Springbeats vMIDI1", # SBVMIDI
- 		4="Microsoft GS Wavetable Synth" # windows
+		0="loopMIDI Port 1",     # loopMIDI
+		1="01. Internal MIDI",   # LoopBe
+ 		2="IAC Driver Bus 1",    # macOS
+ 		3="Springbeats vMIDI1",  # SBVMIDI
+		4="Midi Through Port-0", # Ubuntu
+ 		5="Microsoft GS Wavetable Synth" # windows
  	]
 
  	preferred_inputs = [
-		0="loopMIDI Port 2",    # loopMIDI
-		1="02. Internal MIDI",  # LoopBe
- 		2="IAC Driver Bus 2",   # macOS
- 		3="Springbeats vMIDI2"  # SBVMIDI
+		0="loopMIDI Port 2",     # loopMIDI
+		1="02. Internal MIDI",   # LoopBe
+ 		2="IAC Driver Bus 2",    # macOS
+		3="Midi Through Port-0", # Ubuntu
+ 		4="Springbeats vMIDI2"   # SBVMIDI
  	]
 
 	outlist = midi("output","list")

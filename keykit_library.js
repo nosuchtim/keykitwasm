@@ -1139,6 +1139,102 @@ mergeInto(LibraryManager.library, {
         }
     },
 
+    // ========== Filesystem Sync ==========
+
+    // Trigger filesystem sync to IndexedDB and real filesystem
+    // Called after file writes to ensure data is persisted
+    js_schedule_sync: function () {
+        if (window.scheduleLocalSync) {
+            window.scheduleLocalSync();
+            return 0;
+        }
+        return -1;
+    },
+
+    // Delete a file from virtual filesystem and sync to IndexedDB
+    // Returns 0 on success, -1 on error
+    js_delete_file__deps: ['$UTF8ToString'],
+    js_delete_file: function (pathPtr) {
+        var path = UTF8ToString(pathPtr);
+        try {
+            Module.FS.unlink(path);
+            console.log('[FS] Deleted file: ' + path);
+            // Trigger sync to persist the deletion
+            if (window.scheduleLocalSync) {
+                window.scheduleLocalSync();
+            }
+            return 0;
+        } catch (err) {
+            console.error('[FS] Failed to delete file: ' + path, err);
+            return -1;
+        }
+    },
+
+    // Delete a directory (must be empty) from virtual filesystem
+    // Returns 0 on success, -1 on error
+    js_delete_dir__deps: ['$UTF8ToString'],
+    js_delete_dir: function (pathPtr) {
+        var path = UTF8ToString(pathPtr);
+        try {
+            Module.FS.rmdir(path);
+            console.log('[FS] Deleted directory: ' + path);
+            if (window.scheduleLocalSync) {
+                window.scheduleLocalSync();
+            }
+            return 0;
+        } catch (err) {
+            console.error('[FS] Failed to delete directory: ' + path, err);
+            return -1;
+        }
+    },
+
+    // Clear all local data (recursive delete of /keykit/local contents)
+    // Returns 0 on success, -1 on error
+    js_clear_local_data: function () {
+        function deleteContents(path) {
+            try {
+                var entries = Module.FS.readdir(path);
+                for (var i = 0; i < entries.length; i++) {
+                    var entry = entries[i];
+                    if (entry === '.' || entry === '..') continue;
+                    var fullPath = path + '/' + entry;
+                    try {
+                        var stat = Module.FS.stat(fullPath);
+                        if (Module.FS.isDir(stat.mode)) {
+                            deleteContents(fullPath);
+                            Module.FS.rmdir(fullPath);
+                        } else {
+                            Module.FS.unlink(fullPath);
+                        }
+                    } catch (err) {
+                        console.warn('Could not delete ' + fullPath + ':', err);
+                    }
+                }
+            } catch (err) {
+                // Directory may not exist
+            }
+        }
+
+        try {
+            deleteContents('/keykit/local');
+            console.log('[FS] Cleared all local data');
+
+            // Recreate subdirectories
+            try { Module.FS.mkdir('/keykit/local/pages'); } catch (err) {}
+            try { Module.FS.mkdir('/keykit/local/music'); } catch (err) {}
+            try { Module.FS.mkdir('/keykit/local/lib'); } catch (err) {}
+
+            // Sync to IndexedDB
+            if (window.scheduleLocalSync) {
+                window.scheduleLocalSync();
+            }
+            return 0;
+        } catch (err) {
+            console.error('[FS] Failed to clear local data:', err);
+            return -1;
+        }
+    },
+
     // ========== Host OS Detection ==========
 
     // Get host operating system name

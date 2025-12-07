@@ -179,9 +179,13 @@
             <h1 style="margin: 0; display: flex; align-items: center; gap: 10px;"><img src="keykit.ico" alt="" style="width: 40px; height: 40px;"> KeyKit</h1>
             <div style="display: flex; align-items: center; gap: 10px;">
                 <span style="color: #888; margin-right: 5px;">Size:</span>
-                <button class="size-btn" onclick="setCanvasSize(1024, 768)" style="padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">1024x768</button>
-                <button class="size-btn" onclick="setCanvasSize(1200, 800)" style="padding: 5px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">1200x800</button>
-                <button class="size-btn" onclick="setCanvasSize(1920, 1080)" style="padding: 5px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">1920x1080</button>
+                <select id="canvas-size-select" onchange="var s = this.value.split('x'); setCanvasSize(parseInt(s[0]), parseInt(s[1]));" style="padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    <option value="640x480">640x480</option>
+                    <option value="800x600">800x600</option>
+                    <option value="1024x768" selected>1024x768</option>
+                    <option value="1200x800">1200x800</option>
+                    <option value="1920x1080">1920x1080</option>
+                </select>
                 <span style="margin: 0 10px; color: #444;">|</span>
                 <button id="connect-local-btn" onclick="if(window.requestLocalDirAccess) requestLocalDirAccess().then(ok => { if(ok && window.updateSyncStatus) updateSyncStatus(); }); else alert('Please wait for KeyKit to finish loading');" style="padding: 5px 15px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
                     Connect Local Folder
@@ -418,43 +422,56 @@
                         console.error('Failed to mount IDBFS:', mountErr);
                     }
 
-                    // Create pages subdirectory if it doesn't exist
+                    // Create local subdirectories if they don't exist
                     try {
                         Module.FS.mkdir('/keykit/local/pages');
                     } catch (err) { /* may exist */ }
-                    console.log('Created /keykit/local/pages directory');
-
-                    // Load page files from manifest (only if not already in IndexedDB)
                     try {
-                        const pagesResponse = await fetch('local/pages/pages_manifest.json');
-                        const pageFiles = await pagesResponse.json();
-                        console.log(`Found ${pageFiles.length} page files in manifest`);
+                        Module.FS.mkdir('/keykit/local/music');
+                    } catch (err) { /* may exist */ }
+                    try {
+                        Module.FS.mkdir('/keykit/local/lib');
+                    } catch (err) { /* may exist */ }
+                    console.log('Created /keykit/local subdirectories');
 
-                        // Get existing files from IndexedDB
-                        let existingFiles = [];
+                    // Helper to load files from a manifest into virtual filesystem
+                    async function loadLocalDir(subdir, manifestName) {
                         try {
-                            existingFiles = Module.FS.readdir('/keykit/local/pages');
-                        } catch (err) { /* directory might be empty */ }
+                            const response = await fetch(`local/${subdir}/${manifestName}`);
+                            const files = await response.json();
+                            console.log(`Found ${files.length} files in local/${subdir}/ manifest`);
 
-                        for (const filename of pageFiles) {
-                            // Skip if file already exists (IndexedDB wins)
-                            if (existingFiles.includes(filename)) {
-                                console.log(`Skipping ${filename} (already in IndexedDB)`);
-                                continue;
-                            }
+                            // Get existing files from IndexedDB
+                            let existingFiles = [];
                             try {
-                                const fileResponse = await fetch(`local/pages/${filename}`);
-                                const content = await fileResponse.arrayBuffer();
-                                const uint8Array = new Uint8Array(content);
-                                Module.FS.writeFile(`/keykit/local/pages/${filename}`, uint8Array);
-                            } catch (err) {
-                                console.warn(`Failed to load local/pages/${filename}:`, err);
+                                existingFiles = Module.FS.readdir(`/keykit/local/${subdir}`);
+                            } catch (err) { /* directory might be empty */ }
+
+                            for (const filename of files) {
+                                // Skip if file already exists (IndexedDB wins)
+                                if (existingFiles.includes(filename)) {
+                                    console.log(`Skipping ${filename} (already in IndexedDB)`);
+                                    continue;
+                                }
+                                try {
+                                    const fileResponse = await fetch(`local/${subdir}/${filename}`);
+                                    const content = await fileResponse.arrayBuffer();
+                                    const uint8Array = new Uint8Array(content);
+                                    Module.FS.writeFile(`/keykit/local/${subdir}/${filename}`, uint8Array);
+                                } catch (err) {
+                                    console.warn(`Failed to load local/${subdir}/${filename}:`, err);
+                                }
                             }
+                            console.log(`Loaded files into /keykit/local/${subdir}/`);
+                        } catch (err) {
+                            console.log(`No manifest found in local/${subdir}/`);
                         }
-                        console.log(`Loaded page files into /keykit/local/pages/`);
-                    } catch (err) {
-                        console.log('No pages manifest found in local/pages/');
                     }
+
+                    // Load bundled local files from manifests
+                    await loadLocalDir('pages', 'pages_manifest.json');
+                    await loadLocalDir('music', 'music_manifest.json');
+                    await loadLocalDir('lib', 'lib_manifest.json');
 
                     // Set up File System Access API for real filesystem sync
                     window.keykitLocalDirHandle = null;
@@ -578,34 +595,34 @@
                             }
                         }
 
+                        // Helper to sync a directory recursively
+                        async function syncDir(vfsPath, depth) {
+                            if (depth > 5) return; // prevent infinite recursion
+                            try {
+                                const entries = Module.FS.readdir(vfsPath);
+                                for (const entry of entries) {
+                                    if (entry === '.' || entry === '..') continue;
+                                    const fullPath = vfsPath + '/' + entry;
+                                    try {
+                                        const stat = Module.FS.stat(fullPath);
+                                        if (Module.FS.isDir(stat.mode)) {
+                                            // Recurse into subdirectory
+                                            await syncDir(fullPath, depth + 1);
+                                        } else {
+                                            // Sync file
+                                            await window.syncFileToReal(fullPath);
+                                        }
+                                    } catch (statErr) {
+                                        console.warn('Could not stat ' + fullPath + ':', statErr);
+                                    }
+                                }
+                            } catch (err) {
+                                // Directory may not exist
+                            }
+                        }
+
                         try {
-                            // Sync pages directory
-                            try {
-                                const pageFiles = Module.FS.readdir('/keykit/local/pages');
-                                for (const file of pageFiles) {
-                                    if (file === '.' || file === '..') continue;
-                                    await window.syncFileToReal('/keykit/local/pages/' + file);
-                                }
-                            } catch (err) { /* pages dir may not exist */ }
-
-                            // Sync music directory
-                            try {
-                                const musicFiles = Module.FS.readdir('/keykit/local/music');
-                                for (const file of musicFiles) {
-                                    if (file === '.' || file === '..') continue;
-                                    await window.syncFileToReal('/keykit/local/music/' + file);
-                                }
-                            } catch (err) { /* music dir may not exist */ }
-
-                            // Sync lib directory
-                            try {
-                                const libFiles = Module.FS.readdir('/keykit/local/lib');
-                                for (const file of libFiles) {
-                                    if (file === '.' || file === '..') continue;
-                                    await window.syncFileToReal('/keykit/local/lib/' + file);
-                                }
-                            } catch (err) { /* lib dir may not exist */ }
-
+                            await syncDir('/keykit/local', 0);
                             return true;
                         } catch (err) {
                             console.error('Failed to sync local files:', err);
@@ -663,6 +680,62 @@
                             btn.style.background = '#4CAF50';
                             status.textContent = 'Not connected - files only saved to browser';
                             status.style.color = '#888';
+                        }
+                    };
+
+                    // Clear all local data from IndexedDB
+                    window.clearLocalData = async function() {
+                        if (!confirm('This will delete ALL files in /keykit/local (pages, music, lib, etc.) from browser storage.\n\nThis cannot be undone. Continue?')) {
+                            return;
+                        }
+
+                        try {
+                            // Helper to recursively delete directory contents
+                            function deleteContents(path) {
+                                try {
+                                    const entries = Module.FS.readdir(path);
+                                    for (const entry of entries) {
+                                        if (entry === '.' || entry === '..') continue;
+                                        const fullPath = path + '/' + entry;
+                                        try {
+                                            const stat = Module.FS.stat(fullPath);
+                                            if (Module.FS.isDir(stat.mode)) {
+                                                deleteContents(fullPath);
+                                                Module.FS.rmdir(fullPath);
+                                            } else {
+                                                Module.FS.unlink(fullPath);
+                                            }
+                                        } catch (err) {
+                                            console.warn('Could not delete ' + fullPath + ':', err);
+                                        }
+                                    }
+                                } catch (err) {
+                                    // Directory may not exist
+                                }
+                            }
+
+                            // Delete contents of /keykit/local
+                            deleteContents('/keykit/local');
+                            console.log('Deleted all files in /keykit/local');
+
+                            // Recreate subdirectories
+                            try { Module.FS.mkdir('/keykit/local/pages'); } catch (err) {}
+                            try { Module.FS.mkdir('/keykit/local/music'); } catch (err) {}
+                            try { Module.FS.mkdir('/keykit/local/lib'); } catch (err) {}
+
+                            // Sync to IndexedDB to persist the deletion
+                            await new Promise((resolve) => {
+                                Module.FS.syncfs(false, function(err) {
+                                    if (err) console.error('Sync error:', err);
+                                    resolve();
+                                });
+                            });
+
+                            alert('Local data cleared. The page will reload to apply changes.');
+                            location.reload();
+                        } catch (err) {
+                            console.error('Failed to clear local data:', err);
+                            alert('Error clearing local data: ' + err.message);
                         }
                     };
 

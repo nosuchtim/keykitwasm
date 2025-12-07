@@ -1,0 +1,3 @@
+function foofunc() {
+	return("bar")
+}

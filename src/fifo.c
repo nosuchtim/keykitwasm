@@ -6,6 +6,11 @@
 
 #include "key.h"
 
+#ifdef __EMSCRIPTEN__
+// JavaScript function to trigger filesystem sync
+extern int js_schedule_sync(void);
+#endif
+
 Htablep Fifotable = NULL;
 Fifo *Topfifo = NULL;
 Fifo *Freefifo = NULL;
@@ -107,6 +112,9 @@ void
 closefifo(Fifo *f)
 {
 	Fifodata *fd, *nextfd;
+#ifdef __EMSCRIPTEN__
+	int was_write = (f->flags & (FIFO_WRITE | FIFO_APPEND)) != 0;
+#endif
 
 	flushlinebuff(f);
 	if ( f->flags & FIFO_ISPORT ) {
@@ -125,6 +133,12 @@ closefifo(Fifo *f)
 		else
 			myfclose(f->fp);
 		f->fp = NULL;
+#ifdef __EMSCRIPTEN__
+		// Trigger filesystem sync only after writing files
+		if ( was_write ) {
+			js_schedule_sync();
+		}
+#endif
 	}
 
 	/* If any task is blocked on it, give them an Eof */
@@ -831,6 +845,8 @@ getfromfifo(Fifo *f)
 					Msg1[i++] = c;
 					c = getc(f->fp);
 				}
+				/* Ensure buffer is allocated even for empty lines */
+				makeroom((long)i+2,&Msg1,&Msg1size);
 				Msg1[i] = '\0';
 				ret(strdatum(uniqstr(Msg1)));
 			}

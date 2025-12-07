@@ -30,7 +30,7 @@ def run_build_steps(repo_path):
     lib_dir = os.path.join(repo_path, "lib")
     lib_manifest_script = os.path.join(lib_dir, "generate_manifest.py")
     if os.path.exists(lib_manifest_script):
-        print("\n[1/2] Generating lib manifest...")
+        print("\n[1/5] Generating lib manifest...")
         result = subprocess.run(
             [sys.executable, "generate_manifest.py"],
             cwd=lib_dir,
@@ -46,10 +46,31 @@ def run_build_steps(repo_path):
     else:
         print(f"Warning: lib manifest script not found: {lib_manifest_script}")
 
+    # Run local subdirectory manifest generators
+    local_subdirs = ["pages", "music", "lib"]
+    step = 2
+    for subdir in local_subdirs:
+        local_subdir = os.path.join(repo_path, "local", subdir)
+        manifest_script = os.path.join(local_subdir, "generate_manifest.py")
+        if os.path.exists(manifest_script):
+            print(f"\n[{step}/5] Generating local/{subdir} manifest...")
+            result = subprocess.run(
+                [sys.executable, "generate_manifest.py"],
+                cwd=local_subdir,
+                capture_output=True,
+                text=True
+            )
+            if result.returncode != 0:
+                print(f"Error running local/{subdir} manifest generator:")
+                print(result.stderr)
+                sys.exit(1)
+            print(result.stdout.strip())
+        step += 1
+
     # Run WASM build
     build_script = os.path.join(repo_path, "build_wasm.py")
     if os.path.exists(build_script):
-        print("\n[2/2] Building WASM...")
+        print("\n[5/5] Building WASM...")
         result = subprocess.run(
             [sys.executable, "build_wasm.py"],
             cwd=repo_path,
@@ -180,17 +201,26 @@ def create_dist(repo_path, zip_path):
         local_src = os.path.join(repo_path, "local")
 
         if os.path.isdir(local_src):
+            local_file_count = 0
             for root, dirs, files in os.walk(local_src):
                 for filename in files:
+                    # Skip backup files, vim undo files, etc.
+                    if filename.endswith('~') or filename.startswith('.'):
+                        continue
+                    # Skip generate_manifest.py scripts
+                    if filename == 'generate_manifest.py':
+                        continue
                     src_file = os.path.join(root, filename)
                     rel_path = os.path.relpath(src_file, repo_path)
                     zf.write(src_file, f"{subdir}/{rel_path}")
-            print(f"Added: {subdir}/local/ directory")
+                    local_file_count += 1
+            print(f"Added: {local_file_count} files to {subdir}/local/")
         else:
             # Create empty local directory structure with placeholder files
             # (zip files can't store empty directories, so we add .gitkeep files)
             zf.writestr(f"{subdir}/local/music/.gitkeep", "")
             zf.writestr(f"{subdir}/local/pages/.gitkeep", "")
+            zf.writestr(f"{subdir}/local/lib/.gitkeep", "")
             print(f"Added: empty {subdir}/local/ directory structure")
 
         # Add serve.py for convenience

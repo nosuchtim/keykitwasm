@@ -700,8 +700,10 @@ eprint(char *fmt,...)
 {
 	va_list args;
 
+	va_start(args,fmt);
 	makeroom(1024+2*(long)strlen(fmt),&Msgt,&Msgtsize);
 	vsprintf(Msgt,fmt,args);
+	va_end(args);
 	mdep_popup(Msgt);
 
 	va_start(args,fmt);
