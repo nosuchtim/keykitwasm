@@ -618,6 +618,7 @@
 #library keyrc.k addprerc
 #library keyrc.k addpostrc
 #library keyrc.k dokeylocal
+#library keyrc.k keyrc_background
 #library keyrc.k prelocaldefaults
 #library keyrc.k rcdefaults
 #library keyrc.k rcpostboot
@@ -1458,6 +1459,8 @@
 #library updatelib.k updatelib
 #library updatelib.k readeveryfile
 #library updatelib.k rereadlib
+#library updatelib.k forcerereadlib
+#library updatelib.k forceupdatelib
 #library util1.k argvlist
 #library util1.k arraycopy
 #library util1.k arraysortonindex
@@ -1558,6 +1561,7 @@
 #library util1.k haschannel
 #library util1.k fakekeyboardinput
 #library util1.k eval_number
+#library util1.k xyzzy
 #library util2.k strindex
 #library util2.k debugfile
 #library util2.k controllerlist
