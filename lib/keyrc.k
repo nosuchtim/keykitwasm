@@ -204,8 +204,10 @@ function dokeylocal() {
 }
 
 function keyrc_background() {
+	millisleep(5000)
+	print("\nStarting forceupdatelib...")
 	forceupdatelib()
-	# print("forceupdatelib() finished.")
+	printf("Done.\nkey> ")
 }
 
 #name	prelocaldefaults
