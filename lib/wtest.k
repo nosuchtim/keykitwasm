@@ -128,4 +128,4 @@ class wtest
 	}
 }
 
-sweeptool(wtest)
+# sweeptool(wtest)
