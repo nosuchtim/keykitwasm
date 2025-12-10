@@ -24,7 +24,7 @@ method init {
 method redraw {
 	$.w.redraw()
 	$.w2.redraw()
-	$.line($.sep)
+	$.line($.sep,STORE)
 	$.w.text("Bounce",$.textxy)
 	$.w.text("Speed",$.speedxy)
 	for ( o in $.children() )
@@ -73,18 +73,18 @@ method task_bounce() {
 	$.lines[0] = xy($.w2.xmin()+10,$.w2.ymin()+10,
 			$.w2.xmin()+30,$.w2.ymin()+30)
 	$.dirs[0] = xy(1,2,2,1)
-	$.line($.lines[0],XOR)
+	$.line($.lines[0],STORE)
 	while ( 1 ) {
 		if ( $.sleeptm > 0 ) {
 			sync()
 			millisleep($.sleeptm)
 		}
-		$.line($.lines[0],XOR)
+		$.line($.lines[0],CLEAR)
 		sz = $.w2.size()
 
 		$.adj($.lines[0],$.dirs[0],sz)
 
-		$.line($.lines[0],XOR)
+		$.line($.lines[0],STORE)
 	}
 }
 
