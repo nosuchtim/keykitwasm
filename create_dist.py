@@ -223,6 +223,20 @@ def create_dist(repo_path, zip_path):
             zf.writestr(f"{subdir}/local/lib/.gitkeep", "")
             print(f"Added: empty {subdir}/local/ directory structure")
 
+        # Add doc/ directory (HTML documentation)
+        doc_src = os.path.join(repo_path, "doc")
+
+        if os.path.isdir(doc_src):
+            doc_count = 0
+            for filename in os.listdir(doc_src):
+                if filename.endswith('.html'):
+                    src_file = os.path.join(doc_src, filename)
+                    zf.write(src_file, f"{subdir}/doc/{filename}")
+                    doc_count += 1
+            print(f"Added: {doc_count} HTML files to {subdir}/doc/")
+        else:
+            print(f"Warning: doc directory not found: {doc_src}")
+
         # Add serve.py for convenience
         serve_src = os.path.join(repo_path, "serve.py")
         if os.path.exists(serve_src):
