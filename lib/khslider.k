@@ -29,7 +29,7 @@ method init(vmin,vmax,vinit,obj,meth,...) {
 method redraw {
 	$.w.redraw()
 	if ( $.linexy != 0 ) {
-		$.line($.linexy)
+		$.line($.linexy,STORE)
 		$.fillit(STORE)
 	}
 }

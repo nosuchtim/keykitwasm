@@ -2416,7 +2416,7 @@ method redraw() {
 		tx1 = xmid
 	$.textleft("Name: "+$.groupname+"   # Tracks: "+string($.ntracks),
 		xy(tx1,y0a+2,$.xmax()-1,y0a+th+2))
-	$.line(xy($.xmin(),y0a-1,$.xmax(),y0a-1))
+	$.line(xy($.xmin(),y0a-1,$.xmax(),y0a-1),STORE)
 
 	# execute redraw method on all visible children
 	for ( o in $.children() ) {

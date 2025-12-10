@@ -311,7 +311,7 @@ method updateline(n) {
 	if ( $.lastdone >= 0 ) {
 		$.line(xy(x,$.ym1,x,$.y1),CLEAR)
 		sz = $.ph[$.lastdone].size()
-		$.line(xy(x,sz["y0"],x,sz["y1"]))
+		$.line(xy(x,sz["y0"],x,sz["y1"]),STORE)
 	}
 }
 
@@ -329,9 +329,9 @@ function boomix_leftarrow() {
 	x1 = $.xmax()-2
 	y0 = $.ymin()
 	y1 = $.ymax()
-	$.line(xy(x1,y1,x0,(y0+y1)/2))
-	$.line(xy(x0,(y0+y1)/2,x1,y0))
-	$.line(xy(x1,y0,x1,y1))
+	$.line(xy(x1,y1,x0,(y0+y1)/2),STORE)
+	$.line(xy(x0,(y0+y1)/2,x1,y0),STORE)
+	$.line(xy(x1,y0,x1,y1),STORE)
 }
 
 function boomix_rightarrow() {
@@ -340,9 +340,9 @@ function boomix_rightarrow() {
 	y0 = $.ymin()
 	y1 = $.ymax()
 
-	$.line(xy(x0,y1,x1,(y0+y1)/2))
-	$.line(xy(x1,(y0+y1)/2,x0,y0))
-	$.line(xy(x0,y0,x0,y1))
+	$.line(xy(x0,y1,x1,(y0+y1)/2),STORE)
+	$.line(xy(x1,(y0+y1)/2,x0,y0),STORE)
+	$.line(xy(x0,y0,x0,y1),STORE)
 }
 
 function task_bmx_sweep(obj,n,dir,lim) {

@@ -264,7 +264,7 @@ method updateline(n) {
 	if ( $.lastdone >= 0 ) {
 		$.line(xy($.x0,$.ym3+2,$.x1,$.ym3+2),CLEAR)
 		sz = $.ph[$.lastdone].size()
-		$.line(xy(sz["x0"],$.ym3+2,sz["x1"],$.ym3+2))
+		$.line(xy(sz["x0"],$.ym3+2,sz["x1"],$.ym3+2),STORE)
 	}
 }
 

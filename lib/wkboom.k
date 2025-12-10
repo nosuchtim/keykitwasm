@@ -494,13 +494,13 @@ method redraw() {
 	if ( $.layout == 2 )
 		ty += $.textheight() + 5
 	for ( n=0; n<ndrums; n++ ) {
-		$.line(xy(x0,ystart[n],x1,ystart[n]))
+		$.line(xy(x0,ystart[n],x1,ystart[n]),STORE)
 	}
 	for ( n=0; n<$.nsteps; n++ ) {
 		# show beat number at top
 		xyarr = $.xyofstep(n)
 		$.text(string(n+1),xyarr)
-		$.line(xy(xstart[n],ty,xstart[n],y1))
+		$.line(xy(xstart[n],ty,xstart[n],y1),STORE)
 	}
 	cell = $.cell
 	for ( sn=0; sn<$.nsteps; sn++ ) {

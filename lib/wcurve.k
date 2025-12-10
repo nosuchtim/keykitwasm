@@ -112,15 +112,15 @@ method drawit() {
 		# Line
 		yv1 = y1 - ($.val_from*dy)/127
 		yv2 = y1 - ($.val_to*dy)/127
-		$.line(xy(x0,yv1,x1,yv2))
+		$.line(xy(x0,yv1,x1,yv2),STORE)
 	} else if ( lt == 1 ) {
 		# UpDown
 		yv1 = y1 - ($.val_from*dy)/127
 		yvm = y1 - ($.val_mid*dy)/127
 		yv2 = y1 - ($.val_to*dy)/127
 		xmid = (x0 + x1)/2
-		$.line(xy(x0,yv1,xmid,yvm))
-		$.line(xy(xmid,yvm,x1,yv2))
+		$.line(xy(x0,yv1,xmid,yvm),STORE)
+		$.line(xy(xmid,yvm,x1,yv2),STORE)
 	} else {
 		print("Unknown line type: ",lt)
 	}

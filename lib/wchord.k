@@ -85,12 +85,12 @@ method redraw {
 	# chord names
 	for ( n=0; n<$.ntypes; n++ ) {
 		$.text($.chordtypes[n],xy(x0,$.ystart[n],x0b,$.ystart[n+1]))
-		$.line(xy(x0,$.ystart[n],x1,$.ystart[n]))
+		$.line(xy(x0,$.ystart[n],x1,$.ystart[n]),STORE)
 	}
 	# beat numbers
 	for ( n=0; n<$.nkeys; n++ ) {
 		$.text($.keys[n],xy($.xstart[n],y0,$.xstart[n+1],$.ystart[0]))
-		$.line(xy($.xstart[n],y0,$.xstart[n],y1))
+		$.line(xy($.xstart[n],y0,$.xstart[n],y1),STORE)
 	}
 	if ( $.currkey >=0 && $.currtype >= 0 )
 		$.fill($.currkey,$.currtype,STORE)

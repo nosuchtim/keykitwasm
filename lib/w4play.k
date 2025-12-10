@@ -110,7 +110,7 @@ method setenable(v,m,i) {
 }
 method redraw {
 	$.w.redraw()
-	$.line($.sep)
+	$.line($.sep,STORE)
 	$.w.text("Four Play",$.textxy)
 	for ( o in $.children() )
 		o.redraw()

@@ -42,7 +42,7 @@ method init {
 }
 method redraw {
 	$.w.redraw()
-	$.line($.sep)
+	$.line($.sep,STORE)
 	$.w.text("Sync",$.textxy)
 	for ( o in $.children() )
 		o.redraw()

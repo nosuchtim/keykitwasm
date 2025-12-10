@@ -61,9 +61,9 @@ function wnudge_uparrow() {
 	x1 = $.xmax()
 	y0 = $.ymin() + 2
 	y1 = $.ymax() - 2
-	$.line(xy(x0,y1,(x0+x1)/2,y0))
-	$.line(xy((x0+x1)/2,y0,x1,y1))
-	$.line(xy(x1,y1,x0,y1))
+	$.line(xy(x0,y1,(x0+x1)/2,y0),STORE)
+	$.line(xy((x0+x1)/2,y0,x1,y1),STORE)
+	$.line(xy(x1,y1,x0,y1),STORE)
 }
 
 function wnudge_downarrow() {
@@ -71,18 +71,18 @@ function wnudge_downarrow() {
 	x1 = $.xmax()
 	y0 = $.ymin() + 2
 	y1 = $.ymax() - 2
-	$.line(xy(x0,y0,(x0+x1)/2,y1))
-	$.line(xy((x0+x1)/2,y1,x1,y0))
-	$.line(xy(x1,y0,x0,y0))
+	$.line(xy(x0,y0,(x0+x1)/2,y1),STORE)
+	$.line(xy((x0+x1)/2,y1,x1,y0),STORE)
+	$.line(xy(x1,y0,x0,y0),STORE)
 }
 function wnudge_leftarrow() {
 	x0 = $.xmin()+2
 	x1 = $.xmax()-2
 	y0 = $.ymin()
 	y1 = $.ymax()
-	$.line(xy(x1,y1,x0,(y0+y1)/2))
-	$.line(xy(x0,(y0+y1)/2,x1,y0))
-	$.line(xy(x1,y0,x1,y1))
+	$.line(xy(x1,y1,x0,(y0+y1)/2),STORE)
+	$.line(xy(x0,(y0+y1)/2,x1,y0),STORE)
+	$.line(xy(x1,y0,x1,y1),STORE)
 }
 function wnudge_leftarrow2() {
 	x0 = $.xmin()+2
@@ -91,11 +91,11 @@ function wnudge_leftarrow2() {
 	y1 = $.ymax()
 	dx = (x1-x0)/4
 	dy = (y1-y0)/4
-	$.line(xy(x1,y1,x0,(y0+y1)/2))
-	$.line(xy(x1,y1-dy,x0+dx,(y0+y1)/2))
-	$.line(xy(x0,(y0+y1)/2,x1,y0))
-	$.line(xy(x0+dx,(y0+y1)/2,x1,y0+dy))
-	$.line(xy(x1,y0,x1,y1))
+	$.line(xy(x1,y1,x0,(y0+y1)/2),STORE)
+	$.line(xy(x1,y1-dy,x0+dx,(y0+y1)/2),STORE)
+	$.line(xy(x0,(y0+y1)/2,x1,y0),STORE)
+	$.line(xy(x0+dx,(y0+y1)/2,x1,y0+dy),STORE)
+	$.line(xy(x1,y0,x1,y1),STORE)
 }
 
 function wnudge_rightarrow() {
@@ -103,9 +103,9 @@ function wnudge_rightarrow() {
 	x1 = $.xmax()-2
 	y0 = $.ymin()
 	y1 = $.ymax()
-	$.line(xy(x0,y1,x1,(y0+y1)/2))
-	$.line(xy(x1,(y0+y1)/2,x0,y0))
-	$.line(xy(x0,y0,x0,y1))
+	$.line(xy(x0,y1,x1,(y0+y1)/2),STORE)
+	$.line(xy(x1,(y0+y1)/2,x0,y0),STORE)
+	$.line(xy(x0,y0,x0,y1),STORE)
 }
 function wnudge_rightarrow2() {
 	x0 = $.xmin()+2
@@ -114,11 +114,11 @@ function wnudge_rightarrow2() {
 	y1 = $.ymax()
 	dx = (x1-x0)/4
 	dy = (y1-y0)/4
-	$.line(xy(x0,y1,x1,(y0+y1)/2))
-	$.line(xy(x0,y1-dy,x1-dx,(y0+y1)/2))
-	$.line(xy(x1,(y0+y1)/2,x0,y0))
-	$.line(xy(x1-dx,(y0+y1)/2,x0,y0+dy))
-	$.line(xy(x0,y0,x0,y1))
+	$.line(xy(x0,y1,x1,(y0+y1)/2),STORE)
+	$.line(xy(x0,y1-dy,x1-dx,(y0+y1)/2),STORE)
+	$.line(xy(x1,(y0+y1)/2,x0,y0),STORE)
+	$.line(xy(x1-dx,(y0+y1)/2,x0,y0+dy),STORE)
+	$.line(xy(x0,y0,x0,y1),STORE)
 }
 
 function nudge_back(tm,t) {

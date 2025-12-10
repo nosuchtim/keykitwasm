@@ -33,7 +33,7 @@ class wsprites {
 				# print("Prescale =",arr["xy"])
 				t = $.xyscale(arr["xy"])
 				# print("Drawing line t=",t)
-				$.w.line(t)
+				$.w.line(t,STORE)
 			} else {
 				print("Unknown type: ",s)
 			}

@@ -31,7 +31,7 @@ method init {
 }
 method redraw {
 	$.w.redraw()
-	$.line($.sep)
+	$.line($.sep,STORE)
 	$.w.text("Boomix Simple",$.textxy)
 	for ( o in $.children() )
 		o.redraw()

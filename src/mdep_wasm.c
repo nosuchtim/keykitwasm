@@ -1026,6 +1026,14 @@ mdep_mdep(int argc)
 		}
         */
 	}
+	else if ( strcmp(args[0],"clearlocal")==0 ) {
+		int r = js_clear_local_data();
+		d = numdatum((long)r);
+	}
+	else if ( strcmp(args[0],"synclocal")==0 ) {
+		int r = js_sync_from_real();
+		d = numdatum((long)r);
+	}
 	else {
 		/* unrecognized command */
 		eprint("Error: unrecognized mdep argument - %s\n",args[0]);
