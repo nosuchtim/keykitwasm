@@ -5589,6 +5589,19 @@ async function createWasm() {
           console.log('Mouse event listeners set up successfully');
       }
 
+  var _js_sync_from_real = function () {
+          return Asyncify.handleAsync(async () => {
+              if (window.syncAllRealToLocal) {
+                  console.log('[synclocal] Starting sync from real filesystem...');
+                  await window.syncAllRealToLocal();
+                  console.log('[synclocal] Sync complete');
+                  return 0;
+              }
+              console.log('[synclocal] No local folder connected');
+              return -1;
+          });
+      };
+
   function _js_websocket_close(portId) {
           if (!window.keykitWebSockets || !window.keykitWebSockets[portId]) {
               return 0;
@@ -5798,7 +5811,7 @@ async function createWasm() {
   
   var Asyncify = {
   instrumentWasmImports(imports) {
-        var importPattern = /^(invoke_.*|__asyncjs__.*)$/;
+        var importPattern = /^(js_sync_from_real|invoke_.*|__asyncjs__.*)$/;
   
         for (let [x, original] of Object.entries(imports)) {
           if (typeof original == 'function') {
@@ -6887,6 +6900,8 @@ var wasmImports = {
   js_setup_keyboard_events: _js_setup_keyboard_events,
   /** @export */
   js_setup_mouse_events: _js_setup_mouse_events,
+  /** @export */
+  js_sync_from_real: _js_sync_from_real,
   /** @export */
   js_websocket_close: _js_websocket_close,
   /** @export */

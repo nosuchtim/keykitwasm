@@ -43,7 +43,7 @@
 #define STACKSIZE 512
 #define ARRAYHASHSIZE 503
 #define STRHASHSIZE 503
-#define PATHSEP ":"
+#define PATHSEP ";"
 #define SEPARATOR "/"
 
 typedef void (*SIGFUNCTYPE)(int);

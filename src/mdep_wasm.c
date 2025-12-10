@@ -70,6 +70,9 @@ extern int js_get_host_os(char *buffer, int buffer_size);
 // Clear local data
 extern int js_clear_local_data(void);
 
+// Sync from real filesystem
+extern int js_sync_from_real(void);
+
 // Global state for graphics
 static int current_color_index = 0;
 static int canvas_width = 1024;
@@ -1578,7 +1581,7 @@ mdep_destroywindow(void)
 char *
 mdep_keypath(void)
 {
-    return "/keykit/lib";
+    return "/keykit/lib;/keykit/local/lib";
 }
 
 char *

@@ -1515,6 +1515,7 @@ bi_coreleft(int argc)
 
 #ifdef __EMSCRIPTEN__
 extern int js_clear_local_data(void);
+extern int js_sync_from_real(void);
 #endif
 
 void
@@ -1526,6 +1527,19 @@ bi_clearlocal(int argc)
 		execerror("usage: clearlocal()");
 #ifdef __EMSCRIPTEN__
 	r = js_clear_local_data();
+#endif
+	ret(numdatum((long)r));
+}
+
+void
+bi_synclocal(int argc)
+{
+	int r = -1;
+
+	if ( argc != 0 )
+		execerror("usage: synclocal()");
+#ifdef __EMSCRIPTEN__
+	r = js_sync_from_real();
 #endif
 	ret(numdatum((long)r));
 }
@@ -2920,6 +2934,7 @@ struct bltinfo builtins[] = {
 	{ "bitmap",	bi_bitmap,	BI_BITMAP },
 	{ "objectinfo",	bi_objectinfo,	BI_OBJECTINFO },
 	{ "clearlocal",	bi_clearlocal,	BI_CLEARLOCAL },
+	{ "synclocal",	bi_synclocal,	BI_SYNCLOCAL },
 	{ 0,		0,		0 }
 };
 
@@ -3054,5 +3069,6 @@ BLTINFUNC Bltinfuncs[] = {
 	bi_bitmap,
 	bi_objectinfo,
 	o_fillpolygon,
-	bi_clearlocal
+	bi_clearlocal,
+	bi_synclocal
 };

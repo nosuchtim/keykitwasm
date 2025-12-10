@@ -191,6 +191,10 @@
                     Connect Local Folder
                 </button>
                 <span id="sync-status-text" style="color: #888;">Loading...</span>
+                <span style="margin: 0 10px; color: #444;">|</span>
+                <button onclick="showHelp();" style="padding: 5px 15px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Help
+                </button>
             </div>
         </div>
 
@@ -229,6 +233,94 @@
     </div>
 
     <script type="text/javascript">
+        // Show help in a popup window
+        function showHelp() {
+            var helpContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KeyKit Help</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #f0f0f0;
+            padding: 20px;
+            margin: 0;
+            line-height: 1.6;
+        }
+        h1 { color: #4CAF50; margin-top: 0; }
+        h2 { color: #4CAF50; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        h3 { color: #8BC34A; }
+        code {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', monospace;
+        }
+        pre {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-x: auto;
+        }
+        ul { padding-left: 20px; }
+        li { margin: 5px 0; }
+        a { color: #4CAF50; }
+        .section { margin-bottom: 25px; }
+    </style>
+</head>
+<body>
+    <h1>KeyKit Help</h1>
+
+    <div class="section">
+        <h2>Getting Started</h2>
+        <p>KeyKit is a programming language and GUI system for algorithmic and realtime MIDI experimentation. Use the canvas to interact with the GUI, and type commands in the console area.</p>
+    </div>
+
+    <div class="section">
+        <h2>Local Folder Sync</h2>
+        <p>Click <strong>Connect Local Folder</strong> to link a folder (which should exist and be empty initially) on your computer.
+            It will show up as <code>/keykit/local</code> in KeyKit.
+            This allows you to:</p>
+        <ul>
+            <li>Read and write <code>music/.mid</code> MIDI files.</li>
+            <li>Edit <code>lib/*.k</code> files in your favorite editor.
+            <li>After changes, use "Misc->Reread Library" or execute <code>forcerereadlib()</code>.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Mouse Controls</h2>
+        <ul>
+            <li><strong>Left click:</strong> used for almost everything</li>
+            <li><strong>Right click:</strong> rarely used, mostly in the Group tool</li>
+        </ul>
+        When sweeping out a tool's area, a click (i.e. no sweep) will fill the available area.
+    </div>
+
+    <div class="section">
+        <h2>MIDI Setup</h2>
+        <p>KeyKit automatically detects WebMIDI devices, and attempts to assign
+            the default input and output ports depending on your
+            MIDI routing utility (loopBe, loopMIDI, IAC on macOS, Springbeats).</p>
+        <p>In the GUI, use Tools1->Port Enabler and Tools1>PortMap to control the ports being used.
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>More Information</h2>
+        <p>For complete documentation, tutorials, and examples, visit the <a href="https://github.com/nosuchtim/keykit" target="_blank">KeyKit GitHub repository</a>.</p>
+    </div>
+</body>
+</html>
+`;
+            var helpWindow = window.open('', 'KeyKitHelp', 'width=700,height=600,scrollbars=yes,resizable=yes');
+            helpWindow.document.write(helpContent);
+            helpWindow.document.close();
+        }
+
         // Flag to track if WASM runtime is fully initialized
         var wasmRuntimeReady = false;
 
@@ -507,8 +599,17 @@
                                 console.warn('Could not save directory handle to IndexedDB:', dbErr);
                             }
 
+                            // Sync VFS to real filesystem, but don't overwrite existing real files
+                            console.log('Syncing local files to real filesystem (skip existing)...');
+                            await window.syncAllLocalToReal(true);
+
                             return true;
                         } catch (err) {
+                            // User cancelled the dialog - not an error
+                            if (err.name === 'AbortError') {
+                                console.log('Directory selection cancelled');
+                                return false;
+                            }
                             console.error('Failed to get directory access:', err);
                             return false;
                         }
@@ -539,6 +640,11 @@
                                 if (permission === 'granted') {
                                     window.keykitLocalDirHandle = handle;
                                     console.log('Restored directory access:', handle.name);
+
+                                    // Sync files from real filesystem into VFS on startup
+                                    console.log('Syncing from real filesystem on startup...');
+                                    await window.syncAllRealToLocal();
+
                                     return true;
                                 }
                                 // Don't try to request permission here - it requires user gesture
@@ -551,7 +657,8 @@
                     };
 
                     // Sync a file to the real filesystem
-                    window.syncFileToReal = async function(virtualPath) {
+                    // If skipExisting is true, don't overwrite files that already exist in real filesystem
+                    window.syncFileToReal = async function(virtualPath, skipExisting) {
                         if (!window.keykitLocalDirHandle) {
                             console.log('No directory handle - call requestLocalDirAccess() first');
                             return false;
@@ -567,6 +674,18 @@
                             let dirHandle = window.keykitLocalDirHandle;
                             for (const part of parts) {
                                 dirHandle = await dirHandle.getDirectoryHandle(part, { create: true });
+                            }
+
+                            // Check if file already exists in real filesystem
+                            if (skipExisting) {
+                                try {
+                                    await dirHandle.getFileHandle(filename, { create: false });
+                                    // File exists, skip it
+                                    console.log('Skipping existing real file:', relativePath);
+                                    return true;
+                                } catch (notFoundErr) {
+                                    // File doesn't exist, continue to create it
+                                }
                             }
 
                             // Read from virtual filesystem
@@ -587,7 +706,8 @@
                     };
 
                     // Sync all files in /keykit/local to real filesystem
-                    window.syncAllLocalToReal = async function() {
+                    // If skipExisting is true, don't overwrite files that already exist in real filesystem
+                    window.syncAllLocalToReal = async function(skipExisting) {
                         if (!window.keykitLocalDirHandle) {
                             console.log('No directory handle - requesting access...');
                             if (!await window.requestLocalDirAccess()) {
@@ -610,7 +730,7 @@
                                             await syncDir(fullPath, depth + 1);
                                         } else {
                                             // Sync file
-                                            await window.syncFileToReal(fullPath);
+                                            await window.syncFileToReal(fullPath, skipExisting);
                                         }
                                     } catch (statErr) {
                                         console.warn('Could not stat ' + fullPath + ':', statErr);
@@ -632,6 +752,77 @@
 
                     // Alias for backwards compatibility
                     window.syncAllPagesToReal = window.syncAllLocalToReal;
+
+                    // Sync all files from real filesystem into VFS
+                    // This pulls new/updated files from the real directory into KeyKit
+                    window.syncAllRealToLocal = async function() {
+                        if (!window.keykitLocalDirHandle) {
+                            console.log('No directory handle connected');
+                            return false;
+                        }
+
+                        // Helper to ensure VFS directory exists
+                        function ensureVfsDir(path) {
+                            try {
+                                Module.FS.stat(path);
+                            } catch (e) {
+                                Module.FS.mkdir(path);
+                            }
+                        }
+
+                        // Helper to sync a real directory recursively into VFS
+                        async function syncRealDir(realDirHandle, vfsPath, depth) {
+                            if (depth > 5) return; // prevent infinite recursion
+
+                            ensureVfsDir(vfsPath);
+
+                            for await (const entry of realDirHandle.values()) {
+                                const entryVfsPath = vfsPath + '/' + entry.name;
+
+                                if (entry.kind === 'directory') {
+                                    // Recurse into subdirectory
+                                    const subDirHandle = await realDirHandle.getDirectoryHandle(entry.name);
+                                    await syncRealDir(subDirHandle, entryVfsPath, depth + 1);
+                                } else if (entry.kind === 'file') {
+                                    // Read file from real filesystem
+                                    const fileHandle = await realDirHandle.getFileHandle(entry.name);
+                                    const file = await fileHandle.getFile();
+                                    const arrayBuffer = await file.arrayBuffer();
+                                    const data = new Uint8Array(arrayBuffer);
+
+                                    // Write to VFS
+                                    Module.FS.writeFile(entryVfsPath, data);
+                                    console.log('Synced from real filesystem:', entryVfsPath);
+                                }
+                            }
+                        }
+
+                        // Wait if a sync is already in progress
+                        while (window.keykitSyncInProgress) {
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                        }
+                        window.keykitSyncInProgress = true;
+
+                        try {
+                            await syncRealDir(window.keykitLocalDirHandle, '/keykit/local', 0);
+
+                            // Sync the VFS changes to IndexedDB
+                            await new Promise((resolve) => {
+                                Module.FS.syncfs(false, function(err) {
+                                    if (err) console.error('Sync to IndexedDB error:', err);
+                                    resolve();
+                                });
+                            });
+
+                            console.log('Finished syncing real filesystem to VFS');
+                            return true;
+                        } catch (err) {
+                            console.error('Failed to sync from real filesystem:', err);
+                            return false;
+                        } finally {
+                            window.keykitSyncInProgress = false;
+                        }
+                    };
 
                     // Set up debounced sync for file writes
                     window.keykitSyncTimer = null;

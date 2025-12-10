@@ -36,6 +36,7 @@ def compile_wasm():
         "--shell-file", "keykit_shell.html",  # Custom HTML shell
         "-s", "ALLOW_MEMORY_GROWTH=1",
         "-s", "ASYNCIFY=1",  # Important for blocking calls
+        "-s", "ASYNCIFY_IMPORTS=['js_sync_from_real']",  # Functions that can suspend
         "-s", "SUPPORT_LONGJMP=emscripten",  # Enable setjmp/longjmp support (JS-based, compatible with ASYNCIFY)
         "-s", "FORCE_FILESYSTEM=1",  # Enable virtual filesystem
         "-s", "EXPORTED_FUNCTIONS=['_main','_mdep_on_midi_message','_mdep_on_mouse_move','_mdep_on_mouse_button','_mdep_on_key_event','_mdep_on_window_resize','_mdep_on_nats_message','_mdep_on_websocket_event']",

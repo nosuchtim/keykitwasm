@@ -66,7 +66,7 @@ function mkmenu_misc(o) {
 	o.menucmd("AllNotesOff","alloff")
 	o.menucmd("GM Reset","realgmreset")
 	o.menucmd("Redraw",Root,"redraw")
-	o.menucmd("Reread Library","rereadlib")
+	o.menucmd("Reread Library","forcerereadlib")
 	# o.menucmd("Restart","restartconfig")
 	o.menucmd("Send File","readandsend")
 	o.menucmd("Stop All","alloff")

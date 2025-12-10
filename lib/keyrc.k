@@ -7,6 +7,9 @@
 #desc	by calling normboot() to set up the command interpreter and
 #desc	start other primary tasks.
 
+# Include updatelib.k directly so it doesn't depend on keylib.k
+#include "/keykit/lib/updatelib.k"
+
 function keyrc() {
 
 	global(prerc)	# bug workaround
@@ -196,6 +199,13 @@ function dokeylocal() {
 			mapport(0,m)
 		}
 	}
+
+	task keyrc_background()
+}
+
+function keyrc_background() {
+	forceupdatelib()
+	# print("forceupdatelib() finished.")
 }
 
 #name	prelocaldefaults

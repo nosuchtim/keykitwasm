@@ -1235,6 +1235,22 @@ mergeInto(LibraryManager.library, {
         }
     },
 
+    // Sync files from real filesystem into VFS
+    // Call this to pull new/updated files from the connected local folder
+    // Uses Asyncify.handleAsync to properly block C code until sync completes
+    js_sync_from_real: function () {
+        return Asyncify.handleAsync(async () => {
+            if (window.syncAllRealToLocal) {
+                console.log('[synclocal] Starting sync from real filesystem...');
+                await window.syncAllRealToLocal();
+                console.log('[synclocal] Sync complete');
+                return 0;
+            }
+            console.log('[synclocal] No local folder connected');
+            return -1;
+        });
+    },
+
     // ========== Host OS Detection ==========
 
     // Get host operating system name

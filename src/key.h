@@ -395,6 +395,7 @@ typedef void (*PATHFUNC)();
 #define BI_OBJECTINFO	126
 #define O_FILLPOLYGON	127
 #define BI_CLEARLOCAL	128
+#define BI_SYNCLOCAL	129
 
 #define IO_STD 1
 #define IO_REDIR 2

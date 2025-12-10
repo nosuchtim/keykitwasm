@@ -16,16 +16,16 @@ function updatelib(forceit,forcerekeylib,path,reread) {
 		dir = dirs[i]
 		if ( dir == "" )
 			continue
-		# printf("dir=%s",dir)
+		# printf("updatelib: checking dir=%s\n",dir)
 		if ( ! fileexists(dir) ) {
-			printf("dir doesn't exist!")
+			printf("updatelib: dir doesn't exist: %s\n",dir)
 			continue
 		}
 		keylibfn = dir + Dirseparator + "keylib.k"
 		keylibtime = filetime(keylibfn)
 		updateit = forceit
 		files = lsdir(dir)
-		# printf("files=%d",sizeof(files))
+		# printf("updatelib: files in %s = %d\n",dir,sizeof(files))
 		seen = []
 		# remove all the files we're not interested in
 		for ( fn in files ) {
@@ -59,7 +59,7 @@ function updatelib(forceit,forcerekeylib,path,reread) {
 		}
 		if ( updateit ) {
 			anyupdated = 1
-			# print("UPDATING "+keylibfn+"\n")
+			# print("UPDATING "+keylibfn)
 			klf = open(keylibfn,"w")
 			for ( fn in files ) {
 				fullpath = dir + Dirseparator + fn
@@ -139,6 +139,24 @@ function readeveryfile(path) {
 	print("DONE.")
 }
 
+#name	rereadlib
 function rereadlib() {
+	# print("Calling synclocal")
+	# synclocal()  # read any changes in the local filesystem
+	# print("Calling updatelib")
 	updatelib(0,0,Keypath,1)
+	# print("Done.")
+}
+
+#name	forcerereadlib
+function forcerereadlib() {
+	print("Updating library...")
+	synclocal()
+	updatelib(1,1,Keypath,1)
+	print("Done.")
+}
+
+#name	forceupdatelib
+function forceupdatelib() {
+	updatelib(1,1,Keypath,1)
 }
