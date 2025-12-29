@@ -583,13 +583,45 @@ mdep_getnmidi(char *buff, int buffsize, int *port)
     return bytes_read;
 }
 
+// Track last status byte for expanding running status
+static unsigned char last_midi_status[MIDI_OUT_DEVICES] = {0};
+
 void
 mdep_putnmidi(int n, char *cp, Midiport *pport)
 {
     // Send MIDI data via Web MIDI API
     if (pport && pport->opened && pport->private1 >= 0) {
         int device_index = pport->private1;
-        js_send_midi_output(device_index, (unsigned char*)cp, n);
+        unsigned char buffer[256];
+        int out_len = 0;
+
+        // Web MIDI API doesn't support running status, so we need to expand it
+        // Check if first byte is a data byte (bit 7 not set)
+        if (n > 0 && (cp[0] & 0x80) == 0) {
+            // Running status - prepend the last status byte
+            if (device_index < MIDI_OUT_DEVICES && last_midi_status[device_index] != 0) {
+                buffer[out_len++] = last_midi_status[device_index];
+                for (int i = 0; i < n && out_len < 256; i++) {
+                    buffer[out_len++] = (unsigned char)cp[i];
+                }
+            } else {
+                // No previous status - this shouldn't happen, but just send as-is
+                for (int i = 0; i < n && out_len < 256; i++) {
+                    buffer[out_len++] = (unsigned char)cp[i];
+                }
+            }
+        } else {
+            // Has status byte - copy as-is and remember the status
+            for (int i = 0; i < n && out_len < 256; i++) {
+                buffer[out_len++] = (unsigned char)cp[i];
+            }
+            // Remember status byte for next time (ignore system messages 0xF0-0xFF)
+            if (n > 0 && (cp[0] & 0xF0) != 0xF0 && device_index < MIDI_OUT_DEVICES) {
+                last_midi_status[device_index] = (unsigned char)cp[0];
+            }
+        }
+
+        js_send_midi_output(device_index, buffer, out_len);
     }
 }
 

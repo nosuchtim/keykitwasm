@@ -493,8 +493,15 @@ function mkmenu_root(o) {
 	o.menucmd("Move","wmove")
 	o.menucmd("Resize","wresize")
 	o.menucmd("Delete","wdelete")
-	o.submenu("Tools1->","mkmenu_tools",1)
-	o.submenu("Tools2->","mkmenu_tools",2)
+
+	# Only add Tools1 submenu if tools1.lst exists in Keypath
+	if ( tools_list_exists(1) )
+		o.submenu("Tools1->","mkmenu_tools",1)
+
+	# Only add Tools2 submenu if tools2.lst exists in Keypath
+	if ( tools_list_exists(2) )
+		o.submenu("Tools2->","mkmenu_tools",2)
+
 	o.submenu("Misc  ->","mkmenu_misc")
 	o.submenu("Page  ->","mkmenu_page")
 	o.submenu("Window->","mkmenu_wind")
@@ -555,6 +562,17 @@ function tooltypesall() {
 		sz1++
 	}
 	return(nm1)
+}
+
+function tools_list_exists(ti) {
+	# Check if tools{ti}.lst or localtools{ti}.lst exists in Keypath
+	fn = "tools" + string(ti) + ".lst"
+	if ( pathsearch(fn) != "" )
+		return(1)
+	fn = "localtools" + string(ti) + ".lst"
+	if ( pathsearch(fn) != "" )
+		return(1)
+	return(0)
 }
 
 function tooltypes(ti) {

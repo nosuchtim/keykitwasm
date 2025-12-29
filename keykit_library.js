@@ -398,6 +398,15 @@ mergeInto(LibraryManager.library, {
             data.push(HEAPU8[data_ptr + i]);
         }
 
+        // Check if first byte is a status byte (bit 7 set)
+        // Web MIDI API requires explicit status bytes (no running status)
+        if (data.length > 0 && (data[0] & 0x80) === 0) {
+            // First byte is a data byte, not a status byte
+            // This is running status, which Web MIDI doesn't support
+            console.error('Error sending MIDI data: Running status not allowed. First byte:', data[0].toString(16));
+            return -1;
+        }
+
         try {
             output.send(data);
             return 0; // Success

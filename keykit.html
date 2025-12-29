@@ -1060,8 +1060,9 @@
                         console.log(`Found ${musicFiles.length} music files in manifest`);
 
                         let musicLoaded = 0;
-                        for (let i = 0; i < musicFiles.length; i += batchSize) {
-                            const batch = musicFiles.slice(i, i + batchSize);
+                        const musicBatchSize = 10;
+                        for (let i = 0; i < musicFiles.length; i += musicBatchSize) {
+                            const batch = musicFiles.slice(i, i + musicBatchSize);
 
                             await Promise.all(batch.map(async (filename) => {
                                 try {

@@ -1,0 +1,259 @@
+ 1 algo1.exp
+ 1 bench.k
+ 1 dna.k
+ 1 dr202.kbm
+ 1 drums.kbm
+ 1 example10.k
+ 1 example13.k
+ 1 example16.k
+ 1 example17.k
+ 1 example19.k
+ 1 fordrums.exp
+ 1 fordrums2.exp
+ 1 fracdemo.k
+ 1 gutil.k
+ 1 joypad.k
+ 1 joytest.k
+ 1 jvutil.k
+ 1 kmsg.k
+ 1 kslider2.k
+ 1 kvi.bat
+ 1 kvi.sh
+ 1 lyre_lighter_pitch_modulo.k
+ 1 lyre_lighter_pitch_scaled.k
+ 1 lyre_lighter_sections_4.k
+ 1 lyre_lighter_sections_8.k
+ 1 mac.k
+ 1 makefile
+ 1 motion.k
+ 1 motion_rand.k
+ 1 normintr.kp
+ 1 omni.k
+ 1 pagecol.k
+ 1 perkis.k
+ 1 radio.k
+ 1 relay.k
+ 1 rootmon.k
+ 1 shape_ellipse.k
+ 1 shape_line.k
+ 1 shape_tri.k
+ 1 slowdown.k
+ 1 sockutil.k
+ 1 stack.k
+ 1 tjt1.kc
+ 1 tjtalg.k
+ 1 trrack.pl
+ 1 try1.exp
+ 1 wdebug.k
+ 1 whello.k
+ 1 wnull.k
+ 1 wtempo2.k
+ 1 wtext.k
+ 1 wvoldemo.k
+ 4 LOOPYCAM.TXT
+ 4 README.md
+ 4 alphafun.k
+ 4 bsgmdrum.k
+ 4 bsriff.k
+ 4 burn.txt
+ 4 csound.k
+ 4 demo1.k
+ 4 dr202.k
+ 4 drums1.kb
+ 4 dwutil.k
+ 4 eargame.k
+ 4 example1.k
+ 4 example11.k
+ 4 example12.k
+ 4 example14.k
+ 4 example15.k
+ 4 example18.k
+ 4 example2.k
+ 4 example3.k
+ 4 example4.k
+ 4 example5.k
+ 4 example6.k
+ 4 example7.k
+ 4 example8.k
+ 4 example9.k
+ 4 gcontrol.k
+ 4 generate_manifest.bat
+ 4 generate_manifest.py
+ 4 generate_manifest.sh
+ 4 generate_manifest_simple.bat
+ 4 geomaestro.k
+ 4 globvars.k
+ 4 gm2.k
+ 4 grep.exe.stackdump
+ 4 gridinit.k
+ 4 image.k
+ 4 in_c.k
+ 4 inc.k
+ 4 index.html
+ 4 inverti.k
+ 4 joyballs.txt
+ 4 joyecho1.k
+ 4 joyecho2.k
+ 4 joymonitor.k
+ 4 kbutton.k
+ 4 kcmdbutt.k
+ 4 key.dbg
+ 4 keylocal.example
+ 4 keymapdemo.k
+ 4 khslider.k
+ 4 kmenubut.k
+ 4 kmoment.k
+ 4 kmsbutt.k
+ 4 korgrouter.k
+ 4 krubber.k
+ 4 ktext.k
+ 4 ktoggle.k
+ 4 kvalbutt.k
+ 4 launchpad.k
+ 4 layout.k
+ 4 lcd.k
+ 4 linn.k
+ 4 listen.k
+ 4 lyre_lighter_scan1.k
+ 4 lyre_lighter_scan2.k
+ 4 lyre_lighter_scan3.k
+ 4 lyre_lighter_scan3b.k
+ 4 lyre_lighter_scan4.k
+ 4 lyre_lighter_sections_4b.k
+ 4 lyre_lighter_sections_8b.k
+ 4 lyre_lighter_sections_8bm.k
+ 4 matchdiagram.k
+ 4 melodymerge.k
+ 4 midimon.k
+ 4 midirouter.k
+ 4 mmatrix.k
+ 4 monitor.k
+ 4 motion_bounce.k
+ 4 multiforward.k
+ 4 mx202drum.k
+ 4 nano.k
+ 4 nosuchtouch.k
+ 4 nslooperb.k
+ 4 oldhappy.k
+ 4 osc.k
+ 4 padmonitor.k
+ 4 playchords.k
+ 4 rand1.k
+ 4 remapper.k
+ 4 remotecons.k
+ 4 riffraff.k
+ 4 sc7util.k
+ 4 scratch.k
+ 4 scratch2.k
+ 4 scratch3.k
+ 4 sendmail.k
+ 4 shape.k
+ 4 shape_rect.k
+ 4 short.k
+ 4 short2.k
+ 4 shots.k
+ 4 slots.k
+ 4 sock.k
+ 4 stochgen.k
+ 4 typealot.k
+ 4 updatelib.k
+ 4 var.k
+ 4 vary.k
+ 4 vizcamp.k
+ 4 warrange.k
+ 4 wburnbox.k
+ 4 wdancepad.k
+ 4 wgrid.k
+ 4 windobje.k
+ 4 wlifecell.k
+ 4 wpack.k
+ 4 wpage.k
+ 4 wrgb.k
+ 4 writelines.k
+ 4 wsh.k
+ 4 wtest.k
+ 4 wthreshold.k
+ 8 atalooper.k
+ 8 bnchord.k
+ 8 bs202drum.k
+ 8 bsdemo.k
+ 8 bsguide.k
+ 8 draw2phrase.k
+ 8 dsfnest.k
+ 8 dsimfrac.k
+ 8 echoplex.k
+ 8 gifjam.k
+ 8 graphics.k
+ 8 happysets.k
+ 8 hopasong.k
+ 8 hydra.k
+ 8 joyecho3.k
+ 8 joystuff.k
+ 8 korgcontrol.k
+ 8 kslider.k
+ 8 libcore_manifest.json
+ 8 loopycam.odt
+ 8 lyre_player_playfile.k
+ 8 meme.k
+ 8 neural.k
+ 8 page.k
+ 8 pi.k
+ 8 picnic.k
+ 8 procs.k
+ 8 quasar.k
+ 8 read1.k
+ 8 roy.k
+ 8 salvationlooper.k
+ 8 scales1.k
+ 8 setsim.k
+ 8 skronk.k
+ 8 snipper.k
+ 8 wboard.k
+ 8 whoops.k
+ 8 wimage.k
+ 8 wlyre.k
+ 8 wmuse.k
+ 8 www.k
+12 cmds.k
+12 creative.k
+12 demo1.km
+12 ergo.k
+12 faire.k
+12 fresco.k
+12 keyrc.k
+12 korg.k
+12 leap.k
+12 loops.k
+12 lyre_player_looper.k
+12 morph.k
+12 pi10000.txt
+12 realutil.k
+12 skronk2.k
+12 util2.k
+12 waid.k
+12 wgesture.k
+12 windutil.k
+12 wmenu.k
+12 wvideo.k
+16 ergodrive.k
+16 expresso.k
+16 maps.k
+16 wcascade.k
+20 gs_utils.k
+20 players.k
+20 smmutils.k
+20 statfunc.k
+24 drums1.kc
+24 mkmenus.k
+24 wmonolith.k
+24 wphrase.k
+28 basic2.k
+28 eyeful_looper.k
+28 gesture.k
+32 basic1.k
+32 default.ppm
+32 happy.k
+32 loopycam.k
+40 trrack.k
+40 util1.k
+48 keylib.k
