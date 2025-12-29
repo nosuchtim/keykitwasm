@@ -13,7 +13,18 @@
       "Bash(cmd //c \"cd C:\\Users\\tjt\\GitHub\\keykitwasm\\examples && build_examples.bat\")",
       "Bash(cmd //c \"C:\\Users\\tjt\\GitHub\\keykitwasm\\examples\\build_examples.bat\")",
       "Bash(git mv:*)",
-      "Bash(python create_dist.py:*)"
+      "Bash(python create_dist.py:*)",
+      "Bash(mkdir:*)",
+      "Bash(git add:*)",
+      "Bash(where git:*)",
+      "Bash(where:*)",
+      "Bash(git clone:*)",
+      "Bash(./emsdk install:*)",
+      "Bash(./emsdk activate:*)",
+      "Bash(cmd //c \"C:\\\\Users\\\\nosuc\\\\GitHub\\\\emsdk\\\\upstream\\\\emscripten\\\\emcc.bat\" --version)",
+      "Bash(python generate_keylib.py:*)",
+      "Bash(python:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

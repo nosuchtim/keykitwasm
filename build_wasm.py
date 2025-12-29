@@ -13,8 +13,34 @@ src_files = [
 
 def find_emcc():
     """Find emcc executable, checking emsdk directory first, then PATH"""
-    
-    return "C:\\Users\\tjt\\GitHub\\emsdk\\upstream\\emscripten\\emcc.bat"
+
+    return "C:\\Users\\nosuc\\GitHub\\emsdk\\upstream\\emscripten\\emcc.bat"
+
+def generate_keylib_files():
+    """Generate keylib.k files for libcore, libtools, and libextra directories"""
+    print("Generating keylib.k files...")
+
+    directories = ['libcore', 'libtools', 'libextra']
+    for directory in directories:
+        if os.path.isdir(directory):
+            print(f"  Generating {directory}/keylib.k...")
+            result = subprocess.run(
+                [sys.executable, 'generate_keylib.py', directory],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode != 0:
+                print(f"  Warning: Failed to generate {directory}/keylib.k")
+                print(result.stderr)
+            else:
+                # Print summary line
+                for line in result.stdout.split('\n'):
+                    if 'Generated' in line:
+                        print(f"  {line}")
+        else:
+            print(f"  Skipping {directory} (not found)")
+
+    print()
 
 def compile_wasm():
     print("Compiling to WASM...")
@@ -88,5 +114,9 @@ def compile_wasm():
         sys.exit(1)
 
 if __name__ == "__main__":
+    # Generate keylib.k files before compiling
+    generate_keylib_files()
+
+    # Compile to WebAssembly
     compile_wasm()
 

@@ -422,6 +422,100 @@
             // Start async loading
             (async function() {
                 try {
+                    // ====================================================================
+                    // LIBRARY CONFIGURATION - Single source of truth for all lib directories
+                    //
+                    // Default configuration (can be overridden via URL parameter):
+                    //   - Add/remove library directories
+                    //   - Enable/disable loading of specific libraries
+                    //   - Change the order of directories in Keypath
+                    //
+                    // URL Parameter Override:
+                    //   Use ?keypath=/keykit/libcore;/keykit/libtools;/keykit/libextra;/keykit/local/lib
+                    //   to control which libraries are enabled and their order
+                    //
+                    // The configuration automatically controls:
+                    //   - Virtual filesystem directory creation
+                    //   - File loading from manifests
+                    //   - Keypath construction (exposed to C via Module.keypath)
+                    // ====================================================================
+
+                    // Default library configuration
+                    const libraryConfig = [
+                        {
+                            name: 'libcore',
+                            path: '/keykit/libcore',
+                            manifest: 'libcore/libcore_manifest.json',
+                            enabled: true,
+                            batchSize: 5,
+                            description: 'Core library functions'
+                        },
+                        {
+                            name: 'libtools',
+                            path: '/keykit/libtools',
+                            manifest: 'libtools/libtools_manifest.json',
+                            enabled: true,
+                            batchSize: 10,
+                            description: 'User tools and utilities'
+                        },
+                        {
+                            name: 'libextra',
+                            path: '/keykit/libextra',
+                            manifest: 'libextra/libextra_manifest.json',
+                            enabled: true,
+                            batchSize: 10,
+                            description: 'Extra/experimental libraries'
+                        }
+                    ];
+
+                    // Check for URL parameter override
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const keypathParam = urlParams.get('keypath');
+
+                    let keypath;
+                    if (keypathParam) {
+                        // URL parameter provided - use it to determine enabled libraries
+                        keypath = keypathParam;
+                        const urlPaths = keypathParam.split(';').map(p => p.trim());
+
+                        // Disable all libraries by default
+                        libraryConfig.forEach(lib => lib.enabled = false);
+
+                        // Enable only libraries that are in the URL keypath
+                        urlPaths.forEach(urlPath => {
+                            const lib = libraryConfig.find(l => l.path === urlPath);
+                            if (lib) {
+                                lib.enabled = true;
+                            }
+                        });
+
+                        console.log(`Using keypath from URL parameter: ${keypath}`);
+                    } else {
+                        // No URL parameter - build from enabled libraries in config
+                        const enabledPaths = libraryConfig
+                            .filter(lib => lib.enabled)
+                            .map(lib => lib.path);
+                        // Always append /keykit/local/lib at the end
+                        enabledPaths.push('/keykit/local/lib');
+                        keypath = enabledPaths.join(';');
+
+                        console.log(`Using default keypath from configuration`);
+                    }
+
+                    // Store keypath for C code to retrieve via mdep_keypath()
+                    Module.keypath = keypath;
+
+                    console.log('='.repeat(70));
+                    console.log('KEYKIT LIBRARY CONFIGURATION');
+                    console.log('='.repeat(70));
+                    libraryConfig.forEach(lib => {
+                        const status = lib.enabled ? '✓ ENABLED ' : '✗ DISABLED';
+                        console.log(`  ${status} ${lib.name.padEnd(12)} - ${lib.description}`);
+                    });
+                    console.log('-'.repeat(70));
+                    console.log(`Keypath: ${keypath}`);
+                    console.log('='.repeat(70));
+
                     // Wait for FS to be ready
                     var maxWait = 50; // 5 seconds max
                     while (!Module.FS && maxWait-- > 0) {
@@ -434,62 +528,74 @@
 
                     console.log('[' + new Date().toISOString() + '] FS ready, creating directories...');
 
-                    // Create the virtual /keykit/lib directory
+                    // Create the /keykit root directory
                     try {
                         Module.FS.mkdir('/keykit');
                     } catch (err) { /* may exist */ }
-                    try {
-                        Module.FS.mkdir('/keykit/lib');
-                    } catch (err) { /* may exist */ }
-                    console.log('Created /keykit/lib directory');
 
-                    // Fetch the manifest file with timeout
-                    const manifestController = new AbortController();
-                    const manifestTimeout = setTimeout(() => manifestController.abort(), 10000);
-
-                    const response = await fetch('lib/lib_manifest.json', {
-                        signal: manifestController.signal
-                    });
-                    clearTimeout(manifestTimeout);
-
-                    const libFiles = await response.json();
-                    console.log(`Found ${libFiles.length} library files in manifest`);
-
-                    // Load each file
-                    let loaded = 0;
-                    const batchSize = 5;  // Reduced batch size to avoid network contention
-
-                    for (let i = 0; i < libFiles.length; i += batchSize) {
-                        const batch = libFiles.slice(i, i + batchSize);
-
-                        await Promise.all(batch.map(async (filename) => {
+                    // Create directories for enabled libraries
+                    for (const lib of libraryConfig) {
+                        if (lib.enabled) {
                             try {
-                                const fileResponse = await fetch(`lib/${filename}`);
-                                if (!fileResponse.ok) {
-                                    throw new Error(`HTTP ${fileResponse.status}`);
-                                }
-                                const content = await fileResponse.arrayBuffer();
-                                const uint8Array = new Uint8Array(content);
-
-                                Module.FS.writeFile(`/keykit/lib/${filename}`, uint8Array);
-                                loaded++;
-                            } catch (err) {
-                                console.warn(`Failed to load ${filename}:`, err);
-                            }
-                        }));
-
-                        // Update progress
-                        if (loaded % 50 === 0 || i + batchSize >= libFiles.length) {
-                            console.log(`Loaded ${loaded}/${libFiles.length} files...`);
-                            Module.setStatus(`Loading library (${loaded}/${libFiles.length})...`);
+                                Module.FS.mkdir(lib.path);
+                                console.log(`Created ${lib.path}`);
+                            } catch (err) { /* may exist */ }
                         }
                     }
 
-                    console.log('[' + new Date().toISOString() + '] Successfully loaded ' + loaded + ' library files into /keykit/lib/');
+                    // Load all enabled libraries using the configuration
+                    for (const lib of libraryConfig) {
+                        if (!lib.enabled) {
+                            console.log(`Skipping ${lib.name} (disabled in configuration)`);
+                            continue;
+                        }
 
-                    // List files to verify
-                    const files = Module.FS.readdir('/keykit/lib');
-                    console.log(`Virtual filesystem contains ${files.length - 2} files`);
+                        console.log(`Loading ${lib.name} from ${lib.manifest}...`);
+                        let loadedCount = 0;
+
+                        try {
+                            const manifestResponse = await fetch(lib.manifest);
+                            if (!manifestResponse.ok) {
+                                console.warn(`  ${lib.name} manifest not found, skipping`);
+                                continue;
+                            }
+
+                            const files = await manifestResponse.json();
+                            console.log(`  Found ${files.length} files in ${lib.name} manifest`);
+
+                            // Load files in batches
+                            for (let i = 0; i < files.length; i += lib.batchSize) {
+                                const batch = files.slice(i, i + lib.batchSize);
+
+                                await Promise.all(batch.map(async (filename) => {
+                                    try {
+                                        const fileResponse = await fetch(`${lib.name}/${filename}`);
+                                        if (!fileResponse.ok) {
+                                            throw new Error(`HTTP ${fileResponse.status}`);
+                                        }
+                                        const content = await fileResponse.arrayBuffer();
+                                        const uint8Array = new Uint8Array(content);
+
+                                        Module.FS.writeFile(`${lib.path}/${filename}`, uint8Array);
+                                        loadedCount++;
+                                    } catch (err) {
+                                        console.warn(`  Failed to load ${lib.name}/${filename}:`, err);
+                                    }
+                                }));
+
+                                // Update progress for larger libraries
+                                if (files.length > 50 && (loadedCount % 50 === 0 || i + lib.batchSize >= files.length)) {
+                                    console.log(`  Loaded ${loadedCount}/${files.length} files...`);
+                                    Module.setStatus(`Loading ${lib.name} (${loadedCount}/${files.length})...`);
+                                }
+                            }
+
+                            console.log(`  ✓ Successfully loaded ${loadedCount} files into ${lib.path}/`);
+
+                        } catch (err) {
+                            console.warn(`  ✗ Error loading ${lib.name}:`, err);
+                        }
+                    }
 
                     // Create /keykit/local directory and mount IDBFS for persistent storage
                     try {

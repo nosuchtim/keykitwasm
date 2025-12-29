@@ -46,8 +46,8 @@ This will update `lib_manifest.json` with the current list of files.
 In the WebAssembly build:
 
 1. The manifest is fetched by the browser
-2. Each file listed is downloaded and written to a virtual filesystem at `/keykit/lib/`
-3. C code can access files using standard I/O: `fopen("/keykit/lib/filename.k", "r")`
+2. Each file listed is downloaded and written to a virtual filesystem at `/keykit/libcore/`
+3. C code can access files using standard I/O: `fopen("/keykit/libcore/filename.k", "r")`
 
 See `../docs/RUNTIME_LIBRARY_LOADING.md` for complete details.
 

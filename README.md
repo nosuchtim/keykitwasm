@@ -51,9 +51,10 @@ keykitwasm/
 │   ├── mdep_wasm.c/h       # WebAssembly machine-dependent layer
 │   ├── build_wasm.py       # Emscripten build script
 │   └── *.c, *.h            # KeyKit core source files
-├── lib/                    # KeyKit library files (*.k)
+├── libcore/                # KeyKit core library files (*.k)
 │   ├── lib_manifest.json   # Auto-generated file list
 │   └── *.k                 # 390+ library source files
+├── libtools/               # User tools directory (in Keypath)
 ├── examples/               # Canvas drawing examples
 ├── music/                  # Sample MIDI files
 └── docs/                   # Documentation
@@ -72,7 +73,7 @@ The port uses two integration methods:
 KeyKit works with any Web MIDI compatible device.
 For virtual MIDI routing on Windows,
 use <a href="https://springbeats.com/sbvmidi">Springbeats Virtual MIDI Cable driver</a>.
-Some of the files (e.g. lib/keyrc.k) are hard-coded to open "Springbeats vMIDI1" for output and "Springbeats vMIDI2" for input.
+Some of the files (e.g. libcore/keyrc.k) are hard-coded to open "Springbeats vMIDI1" for output and "Springbeats vMIDI2" for input.
 
 The browser will prompt for MIDI access when the application starts. Grant permission to enable MIDI input/output.
 
@@ -81,7 +82,7 @@ The browser will prompt for MIDI access when the application starts. Grant permi
 When adding/removing library files:
 
 ```bash
-cd lib
+cd libcore
 python generate_manifest.py
 ```
 

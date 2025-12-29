@@ -8,12 +8,12 @@ Implemented runtime loading of KeyKit library files from the `lib/` directory in
 
 ### Created:
 1. **`lib/generate_manifest.sh`** - Shell script to generate the file manifest
-2. **`lib/lib_manifest.json`** - JSON array listing all library files (~320 files)
+2. **`libcore/lib_manifest.json`** - JSON array listing all library files (~320 files)
 3. **`RUNTIME_LIBRARY_LOADING.md`** - Complete documentation of the system
 
 ### Modified:
 1. **`keykit_shell.html`** - Added `loadLibraryFiles()` function that:
-   - Creates virtual directories `/keykit/` and `/keykit/lib/`
+   - Creates virtual directories `/keykit/` and `/keykit/libcore/`
    - Fetches `lib_manifest.json`
    - Loads all library files in batches of 10
    - Shows progress updates
@@ -35,8 +35,8 @@ Implemented runtime loading of KeyKit library files from the `lib/` directory in
                ▼
 ┌──────────────────────────────────────────────┐
 │ Module.preRun: loadLibraryFiles()           │
-│ 1. FS.mkdir('/keykit/lib')                  │
-│ 2. fetch('lib/lib_manifest.json')           │
+│ 1. FS.mkdir('/keykit/libcore')                  │
+│ 2. fetch('libcore/lib_manifest.json')           │
 │ 3. Parse JSON array of filenames            │
 └──────────────┬───────────────────────────────┘
                │
@@ -44,14 +44,14 @@ Implemented runtime loading of KeyKit library files from the `lib/` directory in
 ┌──────────────────────────────────────────────┐
 │ For each batch of 10 files:                 │
 │   - fetch('lib/filename.k')                 │
-│   - FS.writeFile('/keykit/lib/filename.k')  │
+│   - FS.writeFile('/keykit/libcore/filename.k')  │
 │   - Update progress bar                     │
 └──────────────┬───────────────────────────────┘
                │
                ▼
 ┌──────────────────────────────────────────────┐
 │ All files loaded, main() starts             │
-│ C code can use fopen("/keykit/lib/*.k")     │
+│ C code can use fopen("/keykit/libcore/*.k")     │
 └──────────────────────────────────────────────┘
 ```
 
@@ -79,7 +79,7 @@ for (let i = 0; i < libFiles.length; i += batchSize) {
 ### 4. Virtual Filesystem Paths
 C code accesses files with absolute paths:
 ```c
-FILE *fp = fopen("/keykit/lib/keylib.k", "r");
+FILE *fp = fopen("/keykit/libcore/keylib.k", "r");
 ```
 
 ## Building and Testing
@@ -108,7 +108,7 @@ Look for:
 - "Loading KeyKit library files..."
 - "Found 320 library files in manifest"
 - "Loaded 10/320 files..." (progress updates)
-- "✓ Successfully loaded 320 library files into /keykit/lib/"
+- "✓ Successfully loaded 320 library files into /keykit/libcore/"
 - "Virtual filesystem contains 320 files"
 
 ## Integration with Existing Code
@@ -117,7 +117,7 @@ The implementation works seamlessly with existing C code:
 
 ```c
 // In mdep_wasm.c or any C file
-FILE *fp = fopen("/keykit/lib/keylib.k", "r");
+FILE *fp = fopen("/keykit/libcore/keylib.k", "r");
 if (fp) {
     char line[1024];
     while (fgets(line, sizeof(line), fp)) {
@@ -173,7 +173,7 @@ The current implementation uses runtime loading for flexibility. For production,
 ```python
 # In build_wasm.py (commented out by default)
 if os.path.exists("../lib"):
-    flags.extend(["--preload-file", "../lib@/keykit/lib"])
+    flags.extend(["--preload-file", "../libcore@/keykit/libcore"])
 ```
 
 This creates a `.data` file that loads faster but:

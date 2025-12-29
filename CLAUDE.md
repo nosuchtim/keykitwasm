@@ -132,12 +132,13 @@ Use the test programs to exercise graphics functionality:
 
 ## Library File Loading
 
-KeyKit library files (`lib/*.k` and related files) are loaded at runtime into Emscripten's virtual filesystem:
+KeyKit library files (`libcore/*.k` and related files) are loaded at runtime into Emscripten's virtual filesystem:
 
-- **Manifest**: `lib/lib_manifest.json` lists all library files (regenerate with `bash lib/generate_manifest.sh`)
+- **Manifest**: `libcore/lib_manifest.json` lists all library files (regenerate with `bash libcore/generate_manifest.sh`)
 - **Runtime Loading**: `keykit_shell.html` contains `loadLibraryFiles()` that fetches and loads files before `main()`
-- **Virtual Paths**: C code accesses files via `/keykit/lib/filename.k` using standard `fopen()`, `fread()`, etc.
+- **Virtual Paths**: C code accesses files via `/keykit/libcore/filename.k` using standard `fopen()`, `fread()`, etc.
 - **Build Config**: `FORCE_FILESYSTEM=1` and `FS` API exported in `build_wasm.py`
+- **Keypath**: Default path is `libcore;libtools;local/lib` allowing separation of core library and user tools
 
 See `docs/RUNTIME_LIBRARY_LOADING.md` for complete details.
 

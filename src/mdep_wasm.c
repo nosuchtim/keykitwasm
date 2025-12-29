@@ -1589,7 +1589,23 @@ mdep_destroywindow(void)
 char *
 mdep_keypath(void)
 {
-    return "/keykit/lib;/keykit/local/lib";
+    // Try to get Keypath from JavaScript configuration (set in HTML)
+    char *js_keypath = (char *)EM_ASM_PTR({
+        if (Module.keypath) {
+            var len = lengthBytesUTF8(Module.keypath) + 1;
+            var str = _malloc(len);
+            stringToUTF8(Module.keypath, str, len);
+            return str;
+        }
+        return 0;
+    });
+
+    if (js_keypath) {
+        return js_keypath;
+    }
+
+    // Fallback to default if JavaScript configuration not available
+    return "/keykit/libcore;/keykit/libtools;/keykit/libextra;/keykit/libwind;/keykit/local/lib";
 }
 
 char *

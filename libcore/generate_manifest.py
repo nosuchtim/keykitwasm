@@ -23,7 +23,7 @@ for pattern in extensions:
 files.sort()
 
 # Write JSON manifest
-with open('lib_manifest.json', 'w') as f:
+with open('libcore_manifest.json', 'w') as f:
     json.dump(files, f, indent=2)
 
-print(f"Generated lib_manifest.json with {len(files)} library files")
+print(f"Generated libcore_manifest.json with {len(files)} library files")

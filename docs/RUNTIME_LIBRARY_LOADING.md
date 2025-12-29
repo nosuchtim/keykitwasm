@@ -10,7 +10,7 @@ KeyKit needs access to its library files (`.k`, `.kc`, `.kb`, `.kbm`, `.exp`, `.
 
 ### 1. Library Manifest
 
-The `lib/lib_manifest.json` file contains a JSON array listing all library files:
+The `libcore/lib_manifest.json` file contains a JSON array listing all library files:
 
 ```json
 [
@@ -31,7 +31,7 @@ bash generate_manifest.sh
 
 The `keykit_shell.html` file contains a `loadLibraryFiles()` function that:
 
-1. Creates virtual directories `/keykit/` and `/keykit/lib/`
+1. Creates virtual directories `/keykit/` and `/keykit/libcore/`
 2. Fetches `lib_manifest.json` to get the list of files
 3. Loads files in batches of 10 for optimal performance
 4. Writes each file to the virtual filesystem using `FS.writeFile()`
@@ -43,7 +43,7 @@ Once loaded, C code can access these files using standard paths:
 
 ```c
 // Open a library file
-FILE *fp = fopen("/keykit/lib/keylib.k", "r");
+FILE *fp = fopen("/keykit/libcore/keylib.k", "r");
 if (fp) {
     // Read file contents
     char buffer[1024];
@@ -129,12 +129,12 @@ To verify library files are loaded:
    - "Loading KeyKit library files..."
    - "Found 320 library files in manifest"
    - "Loaded 10/320 files..."
-   - "✓ Successfully loaded 320 library files into /keykit/lib/"
+   - "✓ Successfully loaded 320 library files into /keykit/libcore/"
    - "Virtual filesystem contains 320 files"
 
 4. In C code, test file access:
 ```c
-FILE *fp = fopen("/keykit/lib/keylib.k", "r");
+FILE *fp = fopen("/keykit/libcore/keylib.k", "r");
 if (fp) {
     printf("Successfully opened keylib.k\n");
     fclose(fp);
@@ -161,7 +161,7 @@ For faster loading, you could alternatively package files at build time using Em
 ```python
 # In build_wasm.py
 if os.path.exists("../lib"):
-    flags.extend(["--preload-file", "../lib@/keykit/lib"])
+    flags.extend(["--preload-file", "../libcore@/keykit/libcore"])
 ```
 
 This creates a `.data` file that loads faster but increases initial download size. The current runtime approach is more flexible for development and allows selective file loading in the future.
@@ -184,7 +184,7 @@ This creates a `.data` file that loads faster but increases initial download siz
 - Solution: Verify `build_wasm.py` exports `FS` in `EXPORTED_RUNTIME_METHODS`
 
 ### Files load but can't be opened in C
-- Wrong path (use `/keykit/lib/filename.k` not relative paths)
+- Wrong path (use `/keykit/libcore/filename.k` not relative paths)
 - File loaded as binary array but has encoding issues
 - Solution: Check console for errors, verify file content in `FS.readdir()`
 

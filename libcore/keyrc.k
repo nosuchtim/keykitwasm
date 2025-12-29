@@ -8,7 +8,7 @@
 #desc	start other primary tasks.
 
 # Include updatelib.k directly so it doesn't depend on keylib.k
-#include "/keykit/lib/updatelib.k"
+#include "/keykit/libcore/updatelib.k"
 
 function keyrc() {
 

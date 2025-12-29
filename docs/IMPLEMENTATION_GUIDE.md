@@ -188,10 +188,10 @@ In your build script or HTML:
 Module.preRun = [function() {
     // Create virtual file system
     FS.mkdir('/keykit');
-    FS.mkdir('/keykit/lib');
+    FS.mkdir('/keykit/libcore');
     
     // Pre-load library files
-    FS.writeFile('/keykit/lib/stdlib.k', libraryFileContent);
+    FS.writeFile('/keykit/libcore/stdlib.k', libraryFileContent);
 }];
 ```
 
@@ -254,7 +254,7 @@ emcc -I. -o keykit.html \
     -s EXPORTED_FUNCTIONS='["_main"]' \
     -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","FS"]' \
     -s FORCE_FILESYSTEM=1 \
-    --preload-file lib@/keykit/lib \
+    --preload-file libcore@/keykit/libcore \
     -D__EMSCRIPTEN__ \
     -O2 \
     main.c util.c misc.c phrase.c sym.c keyto.c yacc.c \

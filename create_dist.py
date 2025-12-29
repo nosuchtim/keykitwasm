@@ -26,11 +26,11 @@ def run_build_steps(repo_path):
     print("Running build steps...")
     print("=" * 50)
 
-    # Run lib manifest generator
-    lib_dir = os.path.join(repo_path, "lib")
+    # Run libcore manifest generator
+    lib_dir = os.path.join(repo_path, "libcore")
     lib_manifest_script = os.path.join(lib_dir, "generate_manifest.py")
     if os.path.exists(lib_manifest_script):
-        print("\n[1/5] Generating lib manifest...")
+        print("\n[1/5] Generating libcore manifest...")
         result = subprocess.run(
             [sys.executable, "generate_manifest.py"],
             cwd=lib_dir,
@@ -38,13 +38,13 @@ def run_build_steps(repo_path):
             text=True
         )
         if result.returncode != 0:
-            print(f"Error running lib manifest generator:")
+            print(f"Error running libcore manifest generator:")
             print(result.stderr)
             sys.exit(1)
         print(result.stdout)
         print("Library manifest generated.")
     else:
-        print(f"Warning: lib manifest script not found: {lib_manifest_script}")
+        print(f"Warning: libcore manifest script not found: {lib_manifest_script}")
 
     # Run local subdirectory manifest generators
     local_subdirs = ["pages", "music", "lib"]
@@ -108,7 +108,7 @@ def create_dist(repo_path, zip_path):
         os.path.join(repo_path, "keykit.html"),
         os.path.join(repo_path, "keykit.js"),
         os.path.join(repo_path, "keykit.wasm"),
-        os.path.join(repo_path, "lib", "lib_manifest.json"),
+        os.path.join(repo_path, "libcore", "lib_manifest.json"),
     ]
 
     missing = [f for f in required_checks if not os.path.exists(f)]
@@ -151,8 +151,8 @@ def create_dist(repo_path, zip_path):
             else:
                 print(f"Warning: File not found: {src_file}")
 
-        # Add lib/ directory (KeyKit library files)
-        lib_src = os.path.join(repo_path, "lib")
+        # Add libcore/ directory (KeyKit library files)
+        lib_src = os.path.join(repo_path, "libcore")
 
         if os.path.isdir(lib_src):
             # Read manifest to get only needed files
@@ -161,22 +161,37 @@ def create_dist(repo_path, zip_path):
                 manifest_files = json.load(f)
 
             # Add manifest
-            zf.write(manifest_path, f"{subdir}/lib/lib_manifest.json")
-            print(f"Added: {subdir}/lib/lib_manifest.json")
+            zf.write(manifest_path, f"{subdir}/libcore/lib_manifest.json")
+            print(f"Added: {subdir}/libcore/lib_manifest.json")
 
             # Add all files listed in manifest
             added_count = 0
             for filename in manifest_files:
                 src_file = os.path.join(lib_src, filename)
                 if os.path.exists(src_file):
-                    zf.write(src_file, f"{subdir}/lib/{filename}")
+                    zf.write(src_file, f"{subdir}/libcore/{filename}")
                     added_count += 1
                 else:
                     print(f"Warning: Manifest file not found: {src_file}")
 
-            print(f"Added: {added_count} library files to {subdir}/lib/")
+            print(f"Added: {added_count} library files to {subdir}/libcore/")
         else:
-            print(f"Warning: lib directory not found: {lib_src}")
+            print(f"Warning: libcore directory not found: {lib_src}")
+
+        # Add libtools/ directory (KeyKit user tools)
+        libtools_src = os.path.join(repo_path, "libtools")
+        if os.path.isdir(libtools_src):
+            libtools_count = 0
+            for filename in os.listdir(libtools_src):
+                if filename.endswith('.k') or filename.endswith('.md'):
+                    src_file = os.path.join(libtools_src, filename)
+                    zf.write(src_file, f"{subdir}/libtools/{filename}")
+                    libtools_count += 1
+            print(f"Added: {libtools_count} files to {subdir}/libtools/")
+        else:
+            # Create empty libtools directory
+            zf.writestr(f"{subdir}/libtools/.gitkeep", "")
+            print(f"Added: empty {subdir}/libtools/ directory")
 
         # Add music/ directory (sample MIDI files)
         music_src = os.path.join(repo_path, "music")
