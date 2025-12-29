@@ -30,7 +30,7 @@ def run_build_steps(repo_path):
     lib_dir = os.path.join(repo_path, "libcore")
     lib_manifest_script = os.path.join(lib_dir, "generate_manifest.py")
     if os.path.exists(lib_manifest_script):
-        print("\n[1/5] Generating libcore manifest...")
+        print("\n[1/7] Generating libcore manifest...")
         result = subprocess.run(
             [sys.executable, "generate_manifest.py"],
             cwd=lib_dir,
@@ -41,19 +41,56 @@ def run_build_steps(repo_path):
             print(f"Error running libcore manifest generator:")
             print(result.stderr)
             sys.exit(1)
-        print(result.stdout)
-        print("Library manifest generated.")
+        print(result.stdout.strip())
     else:
         print(f"Warning: libcore manifest script not found: {lib_manifest_script}")
 
+    # Run libtools manifest generator
+    libtools_dir = os.path.join(repo_path, "libtools")
+    libtools_manifest_script = os.path.join(libtools_dir, "generate_manifest.py")
+    if os.path.exists(libtools_manifest_script):
+        print("\n[2/7] Generating libtools manifest...")
+        result = subprocess.run(
+            [sys.executable, "generate_manifest.py"],
+            cwd=libtools_dir,
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
+            print(f"Error running libtools manifest generator:")
+            print(result.stderr)
+            sys.exit(1)
+        print(result.stdout.strip())
+    else:
+        print(f"Warning: libtools manifest script not found: {libtools_manifest_script}")
+
+    # Run libextra manifest generator
+    libextra_dir = os.path.join(repo_path, "libextra")
+    libextra_manifest_script = os.path.join(libextra_dir, "generate_manifest.py")
+    if os.path.exists(libextra_manifest_script):
+        print("\n[3/7] Generating libextra manifest...")
+        result = subprocess.run(
+            [sys.executable, "generate_manifest.py"],
+            cwd=libextra_dir,
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
+            print(f"Error running libextra manifest generator:")
+            print(result.stderr)
+            sys.exit(1)
+        print(result.stdout.strip())
+    else:
+        print(f"Warning: libextra manifest script not found: {libextra_manifest_script}")
+
     # Run local subdirectory manifest generators
     local_subdirs = ["pages", "music", "lib"]
-    step = 2
+    step = 4
     for subdir in local_subdirs:
         local_subdir = os.path.join(repo_path, "local", subdir)
         manifest_script = os.path.join(local_subdir, "generate_manifest.py")
         if os.path.exists(manifest_script):
-            print(f"\n[{step}/5] Generating local/{subdir} manifest...")
+            print(f"\n[{step}/7] Generating local/{subdir} manifest...")
             result = subprocess.run(
                 [sys.executable, "generate_manifest.py"],
                 cwd=local_subdir,
@@ -70,7 +107,7 @@ def run_build_steps(repo_path):
     # Run WASM build
     build_script = os.path.join(repo_path, "build_wasm.py")
     if os.path.exists(build_script):
-        print("\n[5/5] Building WASM...")
+        print("\n[7/7] Building WASM...")
         result = subprocess.run(
             [sys.executable, "build_wasm.py"],
             cwd=repo_path,
@@ -108,7 +145,7 @@ def create_dist(repo_path, zip_path):
         os.path.join(repo_path, "keykit.html"),
         os.path.join(repo_path, "keykit.js"),
         os.path.join(repo_path, "keykit.wasm"),
-        os.path.join(repo_path, "libcore", "lib_manifest.json"),
+        os.path.join(repo_path, "libcore", "libcore_manifest.json"),
     ]
 
     missing = [f for f in required_checks if not os.path.exists(f)]
@@ -156,13 +193,13 @@ def create_dist(repo_path, zip_path):
 
         if os.path.isdir(lib_src):
             # Read manifest to get only needed files
-            manifest_path = os.path.join(lib_src, "lib_manifest.json")
+            manifest_path = os.path.join(lib_src, "libcore_manifest.json")
             with open(manifest_path, 'r') as f:
                 manifest_files = json.load(f)
 
             # Add manifest
-            zf.write(manifest_path, f"{subdir}/libcore/lib_manifest.json")
-            print(f"Added: {subdir}/libcore/lib_manifest.json")
+            zf.write(manifest_path, f"{subdir}/libcore/libcore_manifest.json")
+            print(f"Added: {subdir}/libcore/libcore_manifest.json")
 
             # Add all files listed in manifest
             added_count = 0
@@ -181,17 +218,60 @@ def create_dist(repo_path, zip_path):
         # Add libtools/ directory (KeyKit user tools)
         libtools_src = os.path.join(repo_path, "libtools")
         if os.path.isdir(libtools_src):
-            libtools_count = 0
-            for filename in os.listdir(libtools_src):
-                if filename.endswith('.k') or filename.endswith('.md'):
+            manifest_path = os.path.join(libtools_src, "libtools_manifest.json")
+            if os.path.exists(manifest_path):
+                with open(manifest_path, 'r') as f:
+                    manifest_files = json.load(f)
+
+                # Add manifest
+                zf.write(manifest_path, f"{subdir}/libtools/libtools_manifest.json")
+                print(f"Added: {subdir}/libtools/libtools_manifest.json")
+
+                # Add all files listed in manifest
+                libtools_count = 0
+                for filename in manifest_files:
                     src_file = os.path.join(libtools_src, filename)
-                    zf.write(src_file, f"{subdir}/libtools/{filename}")
-                    libtools_count += 1
-            print(f"Added: {libtools_count} files to {subdir}/libtools/")
+                    if os.path.exists(src_file):
+                        zf.write(src_file, f"{subdir}/libtools/{filename}")
+                        libtools_count += 1
+                    else:
+                        print(f"Warning: Manifest file not found: {src_file}")
+                print(f"Added: {libtools_count} library files to {subdir}/libtools/")
+            else:
+                print(f"Warning: libtools manifest not found: {manifest_path}")
         else:
             # Create empty libtools directory
             zf.writestr(f"{subdir}/libtools/.gitkeep", "")
             print(f"Added: empty {subdir}/libtools/ directory")
+
+        # Add libextra/ directory (KeyKit extra/experimental files)
+        libextra_src = os.path.join(repo_path, "libextra")
+        if os.path.isdir(libextra_src):
+            manifest_path = os.path.join(libextra_src, "libextra_manifest.json")
+            if os.path.exists(manifest_path):
+                with open(manifest_path, 'r') as f:
+                    manifest_files = json.load(f)
+
+                # Add manifest
+                zf.write(manifest_path, f"{subdir}/libextra/libextra_manifest.json")
+                print(f"Added: {subdir}/libextra/libextra_manifest.json")
+
+                # Add all files listed in manifest
+                libextra_count = 0
+                for filename in manifest_files:
+                    src_file = os.path.join(libextra_src, filename)
+                    if os.path.exists(src_file):
+                        zf.write(src_file, f"{subdir}/libextra/{filename}")
+                        libextra_count += 1
+                    else:
+                        print(f"Warning: Manifest file not found: {src_file}")
+                print(f"Added: {libextra_count} library files to {subdir}/libextra/")
+            else:
+                print(f"Warning: libextra manifest not found: {manifest_path}")
+        else:
+            # Create empty libextra directory
+            zf.writestr(f"{subdir}/libextra/.gitkeep", "")
+            print(f"Added: empty {subdir}/libextra/ directory")
 
         # Add music/ directory (sample MIDI files)
         music_src = os.path.join(repo_path, "music")
