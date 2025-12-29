@@ -12,7 +12,7 @@ import glob
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # File extensions to include
-extensions = ['*.k', '*.kc', '*.kb', '*.kbm', '*.exp', '*.txt', '*.ppm', '*.lst']
+extensions = ['*.k', '*.kc', '*.kb', '*.kbm', '*.kp', '*.km', '*.tp', '*.exp', '*.txt', '*.ppm', '*.lst', '*.html', '*.xml']
 
 # Collect all matching files
 files = []

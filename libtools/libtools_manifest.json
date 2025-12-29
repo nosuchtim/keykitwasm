@@ -1,6 +1,9 @@
 [
   "cmds.k",
   "draw2phrase.k",
+  "drums.kbm",
+  "drums1.kb",
+  "drums1.kc",
   "dsfnest.k",
   "dsimfrac.k",
   "graphics.k",
@@ -83,6 +86,7 @@
   "wkboom2.k",
   "wkey.k",
   "wkeychaos.k",
+  "wkeychaos.txt",
   "wkeywalk.k",
   "wkonnect.k",
   "wleap.k",

@@ -5428,20 +5428,24 @@ async function createWasm() {
               data.push(HEAPU8[data_ptr + i]);
           }
   
+          // Debug: log the data being sent
+          var dataStr = data.map(b => b.toString(16).padStart(2, '0')).join(' ');
+  
           // Check if first byte is a status byte (bit 7 set)
           // Web MIDI API requires explicit status bytes (no running status)
           if (data.length > 0 && (data[0] & 0x80) === 0) {
               // First byte is a data byte, not a status byte
               // This is running status, which Web MIDI doesn't support
-              console.error('Error sending MIDI data: Running status not allowed. First byte:', data[0].toString(16));
+              console.error('Error sending MIDI data: Running status not allowed. Data:', dataStr);
               return -1;
           }
   
           try {
+              // console.log('Sending MIDI:', dataStr);  // Uncomment for debugging
               output.send(data);
               return 0; // Success
           } catch (err) {
-              console.error('Error sending MIDI data:', err);
+              console.error('Error sending MIDI data:', err, 'Data:', dataStr);
               return -1;
           }
       }

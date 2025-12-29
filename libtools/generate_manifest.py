@@ -16,8 +16,8 @@ def generate_manifest():
     # Get all files that should be loaded
     files = []
     for filename in sorted(os.listdir(libtools_dir)):
-        # Include .k, .html, .xml, and .lst files
-        if filename.endswith(('.k', '.html', '.xml', '.lst')):
+        # Include library files (.k, .kc, .kb, .kbm, .kp, .km, .tp, .html, .xml, .lst, .txt, .ppm, .exp)
+        if filename.endswith(('.k', '.kc', '.kb', '.kbm', '.kp', '.km', '.tp', '.html', '.xml', '.lst', '.txt', '.ppm', '.exp')):
             files.append(filename)
 
     # Write manifest

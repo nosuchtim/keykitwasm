@@ -590,38 +590,65 @@ void
 mdep_putnmidi(int n, char *cp, Midiport *pport)
 {
     // Send MIDI data via Web MIDI API
+    // Note: Web MIDI send() expects a single MIDI message, not multiple messages
     if (pport && pport->opened && pport->private1 >= 0) {
         int device_index = pport->private1;
-        unsigned char buffer[256];
-        int out_len = 0;
 
-        // Web MIDI API doesn't support running status, so we need to expand it
-        // Check if first byte is a data byte (bit 7 not set)
-        if (n > 0 && (cp[0] & 0x80) == 0) {
-            // Running status - prepend the last status byte
-            if (device_index < MIDI_OUT_DEVICES && last_midi_status[device_index] != 0) {
-                buffer[out_len++] = last_midi_status[device_index];
-                for (int i = 0; i < n && out_len < 256; i++) {
-                    buffer[out_len++] = (unsigned char)cp[i];
+        // Process the buffer - KeyKit might send running status or multiple messages
+        int i = 0;
+        while (i < n) {
+            unsigned char buffer[256];
+            int out_len = 0;
+            unsigned char status_byte;
+            int msg_len;
+
+            // Check if this byte is a status byte or data byte
+            if ((cp[i] & 0x80) != 0) {
+                // It's a status byte
+                status_byte = (unsigned char)cp[i];
+                buffer[out_len++] = status_byte;
+                i++;
+
+                // Remember status byte for next time (ignore system messages 0xF0-0xFF)
+                if ((status_byte & 0xF0) != 0xF0 && device_index < MIDI_OUT_DEVICES) {
+                    last_midi_status[device_index] = status_byte;
+                }
+
+                // Determine how many data bytes follow this status
+                if ((status_byte & 0xF0) == 0xC0 || (status_byte & 0xF0) == 0xD0) {
+                    msg_len = 1;  // Program Change and Channel Pressure have 1 data byte
+                } else if ((status_byte & 0xF0) >= 0x80 && (status_byte & 0xF0) <= 0xE0) {
+                    msg_len = 2;  // Most channel messages have 2 data bytes
+                } else {
+                    msg_len = 0;  // System messages - variable/special handling
                 }
             } else {
-                // No previous status - this shouldn't happen, but just send as-is
-                for (int i = 0; i < n && out_len < 256; i++) {
-                    buffer[out_len++] = (unsigned char)cp[i];
+                // Running status - no status byte, just data bytes
+                if (device_index < MIDI_OUT_DEVICES && last_midi_status[device_index] != 0) {
+                    status_byte = last_midi_status[device_index];
+                    buffer[out_len++] = status_byte;
+
+                    // Determine message length from the status
+                    if ((status_byte & 0xF0) == 0xC0 || (status_byte & 0xF0) == 0xD0) {
+                        msg_len = 1;
+                    } else {
+                        msg_len = 2;
+                    }
+                } else {
+                    // No previous status - skip this data
+                    i++;
+                    continue;
                 }
             }
-        } else {
-            // Has status byte - copy as-is and remember the status
-            for (int i = 0; i < n && out_len < 256; i++) {
+
+            // Copy data bytes
+            for (int j = 0; j < msg_len && i < n && out_len < 256; j++, i++) {
                 buffer[out_len++] = (unsigned char)cp[i];
             }
-            // Remember status byte for next time (ignore system messages 0xF0-0xFF)
-            if (n > 0 && (cp[0] & 0xF0) != 0xF0 && device_index < MIDI_OUT_DEVICES) {
-                last_midi_status[device_index] = (unsigned char)cp[0];
-            }
-        }
 
-        js_send_midi_output(device_index, buffer, out_len);
+            // Send this single message
+            js_send_midi_output(device_index, buffer, out_len);
+        }
     }
 }
 
