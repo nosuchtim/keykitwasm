@@ -594,12 +594,10 @@ typedef struct Htable {
 
 typedef Htablep *Htablepp;
 
-/* String table node — used only by the interned string table (Strtab). */
-/* Replaces Hnode usage in Stringtable to support GC of interned strings. */
+/* String table node - used only by the interned string table (Strtab). */
 typedef struct Strnode {
 	struct Strnode *next;   /* collision chain */
 	Symstr str;             /* the interned string */
-	char gc_color;          /* GC_WHITE=0, GC_GRAY=1, GC_BLACK=2 */
 } Strnode;
 
 typedef struct Strtable {
@@ -607,19 +605,6 @@ typedef struct Strtable {
 	int count;              /* number of interned strings */
 	Strnode **buckets;
 } Strtable;
-
-#define GC_WHITE 0
-#define GC_GRAY  1
-#define GC_BLACK 2
-
-#define STRGC_IDLE      0
-#define STRGC_MARK_INIT 1
-#define STRGC_MARK      2
-#define STRGC_SWEEP     3
-
-extern int Strgc_state;
-extern void strgc_step(void);
-extern void strgc_full(void);
 
 /* Symbol entries are created during the parsing of a keykit program, */
 /* and are typically pointed-to by Inst entries.  To make array elements */
@@ -1202,7 +1187,7 @@ Hey, mdep_statmidi is no longer used!
 
 #define NONAMEPREFIX "__"
 
-#define KEYVERSION "8.2"
+#define KEYVERSION "8.4"
 
 /* These values might, e.g., be set to 'p' and 'P', if that's what the */
 /* real function keys put out.  Depends on what mdep_getconsole() in mdep.c does. */

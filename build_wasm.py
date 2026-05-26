@@ -2,6 +2,7 @@ import os
 import subprocess
 import glob
 import sys
+import re
 
 # List of source files to compile (in src/ directory)
 src_files = [
@@ -15,6 +16,54 @@ def find_emcc():
     """Find emcc executable, checking emsdk directory first, then PATH"""
 
     return "C:\\Users\\nosuc\\GitHub\\emsdk\\upstream\\emscripten\\emcc.bat"
+
+def read_version():
+    """Read the KeyKit version from the VERSION file."""
+    try:
+        with open("VERSION", "r") as f:
+            version = f.read().strip()
+    except OSError as e:
+        print(f"Unable to read VERSION: {e}")
+        sys.exit(1)
+
+    if not version:
+        print("VERSION is empty")
+        sys.exit(1)
+
+    return version
+
+def replace_in_file(path, pattern, replacement):
+    """Replace one required version marker in a source file."""
+    with open(path, "r") as f:
+        original = f.read()
+
+    updated, count = re.subn(pattern, replacement, original, count=1)
+    if count != 1:
+        print(f"Unable to update version marker in {path}")
+        sys.exit(1)
+
+    if updated != original:
+        with open(path, "w") as f:
+            f.write(updated)
+
+def sync_version_files():
+    """Mirror keykit's VERSION-driven source updates for the WASM build."""
+    version = read_version()
+    replace_in_file(
+        "src/key.h",
+        r'#define KEYVERSION "[^"]*"',
+        f'#define KEYVERSION "{version}"'
+    )
+    replace_in_file(
+        "src/main.c",
+        r'KeyKit [^ ]+ - Copyright',
+        f'KeyKit {version} - Copyright'
+    )
+    replace_in_file(
+        "src/key.rc",
+        r'"KeyKit \([^)]+\)"',
+        f'"KeyKit ({version})"'
+    )
 
 def generate_keylib_files():
     """Generate keylib.k files for libcore, libtools, and libextra directories"""
@@ -114,6 +163,9 @@ def compile_wasm():
         sys.exit(1)
 
 if __name__ == "__main__":
+    # Keep version-bearing source files in sync with VERSION before compiling.
+    sync_version_files()
+
     # Generate keylib.k files before compiling
     generate_keylib_files()
 

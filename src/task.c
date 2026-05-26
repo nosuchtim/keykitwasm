@@ -679,8 +679,6 @@ exectasks(int nosetjmp)
 		if ( (Chkstuff!=0) && (ccnt-- <= 0) ) {
 			if ( Tobechecked != NULL ) phcheck();
 			if ( Htobechecked != NULL ) htcheck();
-			/* Incremental string GC — checks threshold internally */
-			strgc_step();
 			Chkstuff = 0;
 			ccnt = (int)*Checkcount;
 		}
