@@ -13,9 +13,29 @@ src_files = [
 ]
 
 def find_emcc():
-    """Find emcc executable, checking emsdk directory first, then PATH"""
+    """Find emcc executable, checking emsdk directories first, then PATH."""
+    candidates = []
 
-    return "C:\\Users\\nosuc\\GitHub\\emsdk\\upstream\\emscripten\\emcc.bat"
+    emsdk = os.environ.get("EMSDK")
+    if emsdk:
+        candidates.append(os.path.join(emsdk, "upstream", "emscripten", "emcc.bat"))
+        candidates.append(os.path.join(emsdk, "upstream", "emscripten", "emcc"))
+
+    repo_parent = os.path.abspath(os.path.join(os.getcwd(), ".."))
+    candidates.append(os.path.join(repo_parent, "emsdk", "upstream", "emscripten", "emcc.bat"))
+    candidates.append(os.path.join(repo_parent, "emsdk", "upstream", "emscripten", "emcc"))
+
+    for name in ("emcc.bat", "emcc"):
+        for path_dir in os.environ.get("PATH", "").split(os.pathsep):
+            if path_dir:
+                candidates.append(os.path.join(path_dir, name))
+
+    for candidate in candidates:
+        if os.path.isfile(candidate):
+            return candidate
+
+    print("Unable to find emcc. Install/activate emsdk or add emcc to PATH.")
+    return None
 
 def read_version():
     """Read the KeyKit version from the VERSION file."""
