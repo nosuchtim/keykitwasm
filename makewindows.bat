@@ -7,7 +7,7 @@ call :find_python
 if errorlevel 1 exit /b 1
 
 echo Using Python: %PYTHON_CMD%
-%PYTHON_CMD% build_wasm.py
+%PYTHON_CMD% create_dist.py
 exit /b %errorlevel%
 
 :find_python

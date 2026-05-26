@@ -6,10 +6,11 @@ needed to run KeyKit in the browser.
 Run this script from the main keykitwasm repository directory.
 
 Usage:
-    python create_dist.py <output_zipfile>
+    python create_dist.py [output_zipfile]
 
 Example:
-    python create_dist.py keykit_dist.zip
+    python create_dist.py
+    python create_dist.py key84_wasm.zip
 """
 
 import os
@@ -17,6 +18,29 @@ import sys
 import json
 import zipfile
 import subprocess
+
+
+def read_version(repo_path):
+    """Read the KeyKit version from the VERSION file."""
+    version_path = os.path.join(repo_path, "VERSION")
+    try:
+        with open(version_path, "r") as f:
+            version = f.read().strip()
+    except OSError as e:
+        print(f"Unable to read VERSION: {e}")
+        sys.exit(1)
+
+    if not version:
+        print("VERSION is empty")
+        sys.exit(1)
+
+    return version
+
+
+def default_zip_name(repo_path):
+    """Return the default versioned WASM distribution zip name."""
+    version = read_version(repo_path)
+    return f"key{version.replace('.', '')}_wasm.zip"
 
 
 def run_build_steps(repo_path):
@@ -159,9 +183,9 @@ def create_dist(repo_path, zip_path):
     if not zip_path.endswith('.zip'):
         zip_path += '.zip'
 
-    # Get the subdirectory name from the zip filename (without .zip extension)
-    zip_basename = os.path.basename(zip_path)
-    subdir = zip_basename[:-4]  # Remove .zip extension
+    # Keep a stable top-level directory inside the archive; only the zip
+    # filename carries the release version.
+    subdir = "keykitwasm"
 
     # Remove existing zip file if present
     if os.path.exists(zip_path):
@@ -356,7 +380,7 @@ def create_dist(repo_path, zip_path):
 
 
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) > 2:
         print(__doc__)
         sys.exit(1)
 
@@ -367,7 +391,8 @@ def main():
     dist_dir = os.path.join(repo_path, "dist")
     os.makedirs(dist_dir, exist_ok=True)
 
-    zip_path = os.path.join(dist_dir, sys.argv[1])
+    zip_name = sys.argv[1] if len(sys.argv) == 2 else default_zip_name(repo_path)
+    zip_path = os.path.join(dist_dir, zip_name)
 
     # Verify we're in the right directory
     if not os.path.exists(os.path.join(repo_path, "build_wasm.py")):
