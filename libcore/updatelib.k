@@ -148,6 +148,11 @@ function rereadlib() {
 	# print("Done.")
 }
 
+#name	synclocal
+function synclocal() {
+	return(mdep("synclocal"))
+}
+
 #name	forcerereadlib
 function forcerereadlib() {
 	print("Updating library...")

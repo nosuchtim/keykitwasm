@@ -500,6 +500,7 @@
 #library updatelib.k updatelib
 #library updatelib.k readeveryfile
 #library updatelib.k rereadlib
+#library updatelib.k synclocal
 #library updatelib.k forcerereadlib
 #library updatelib.k forceupdatelib
 #library util1.k argvlist
