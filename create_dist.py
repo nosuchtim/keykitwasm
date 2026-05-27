@@ -198,17 +198,17 @@ def create_dist(repo_path, zip_path):
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
         # Files from main repo directory (the built WASM application)
         app_files = [
-            "keykit.html",
-            "keykit.js",
-            "keykit.wasm",
-            "keykit.ico",
+            ("keykit.html", "index.html"),
+            ("keykit.js", "keykit.js"),
+            ("keykit.wasm", "keykit.wasm"),
+            ("keykit.ico", "keykit.ico"),
         ]
 
-        for filename in app_files:
+        for filename, archive_name in app_files:
             src_file = os.path.join(repo_path, filename)
             if os.path.exists(src_file):
-                zf.write(src_file, f"{subdir}/{filename}")
-                print(f"Added: {subdir}/{filename}")
+                zf.write(src_file, f"{subdir}/{archive_name}")
+                print(f"Added: {subdir}/{archive_name}")
             else:
                 print(f"Warning: File not found: {src_file}")
 
@@ -376,7 +376,7 @@ def create_dist(repo_path, zip_path):
     print("\nTo use:")
     print("  1. Extract the zip file")
     print(f"  2. python {subdir}/serve.py")
-    print(f"  3. Open http://localhost:8000/{subdir}/keykit.html")
+    print(f"  3. Open http://localhost:8000/{subdir}/")
 
 
 def main():
