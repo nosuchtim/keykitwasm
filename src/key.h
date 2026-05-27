@@ -61,6 +61,8 @@ typedef struct Hnode **Hnodepp;
 typedef struct Htable *Htablep;
 typedef struct Kobject *Kobjectp;
 typedef struct Strhdr *Strhdrp;
+typedef struct Strnode *Strnodep;
+typedef struct Strtable *Strtablep;
 
 /* These macros can be overridden in mdep.h for systems that require */
 /* special ways of opening text vs. binary files. */
@@ -581,6 +583,7 @@ typedef struct Hnode {
 } Hnode;
 
 #define HT_TOBECHECKED 1
+#define HT_STRGC_MARKED 2
 
 typedef struct Htable {
 	int size;	/* size of nodetable */
@@ -597,16 +600,19 @@ typedef Htablep *Htablepp;
 
 /* String table node - used only by the interned string table (Strtab). */
 typedef struct Strnode {
-	struct Strnode *next;   /* collision chain */
-	Strhdrp hdr;           /* metadata stored immediately before str */
-	Symstr str;             /* the interned string */
+	Strnodep next;		/* collision chain */
+	Strhdrp hdr;		/* metadata stored immediately before str */
+	Symstr str;		/* the interned string */
 } Strnode;
 
 typedef struct Strtable {
-	int size;               /* number of hash buckets */
-	int count;              /* number of interned strings */
-	Strnode **buckets;
+	int size;		/* number of buckets */
+	int count;		/* number of strings stored */
+	Strnodep *buckets;	/* array of Strnode chains */
 } Strtable;
+
+#define STRCODE_STREAM 0
+#define STRCODE_FUNCTION 1
 
 /* Symbol entries are created during the parsing of a keykit program, */
 /* and are typically pointed-to by Inst entries.  To make array elements */
@@ -751,6 +757,7 @@ typedef struct Lknode {
 	struct Lknode *next;	/* Only used in Toplk list. */
 	struct Lknode *notify;	/* List of pending locks with same name */
 } Lknode;
+extern Lknode *Toplk;
 
 typedef struct Kobject {
 	long id;
@@ -850,7 +857,7 @@ extern Ktaskp T;
 extern Ktaskp Tboot;
 extern Ktaskp Running;
 extern int Currpriority;
-extern Codep Ipop;
+extern Codep Ipop, Ireboot;
 extern Fifo *Midi_in_f, *Midi_out_f;
 extern Fifo *Consinf, *Consoutf, *Mousef;
 extern int Consolefd, Midifd, Displayfd;
@@ -1121,6 +1128,11 @@ extern void (*Fatalfunc)(char *);
 extern void (*Diagfunc)(char *);
 extern void checkdebug();
 
+void strregistercode(Codep cp,unsigned long len,int kind);
+void strunregistercode(Codep cp);
+void markstr(Symstr s);
+int strgcdryrun(int verbose);
+
 int yyparse(NOARG);
 
 #ifndef _MAX_PATH
@@ -1189,7 +1201,7 @@ Hey, mdep_statmidi is no longer used!
 
 #define NONAMEPREFIX "__"
 
-#define KEYVERSION "8.5"
+#define KEYVERSION "8.6"
 
 /* These values might, e.g., be set to 'p' and 'P', if that's what the */
 /* real function keys put out.  Depends on what mdep_getconsole() in mdep.c does. */
