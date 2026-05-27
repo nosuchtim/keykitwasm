@@ -60,6 +60,7 @@ typedef struct Hnode *Hnodep;
 typedef struct Hnode **Hnodepp;
 typedef struct Htable *Htablep;
 typedef struct Kobject *Kobjectp;
+typedef struct Strhdr *Strhdrp;
 
 /* These macros can be overridden in mdep.h for systems that require */
 /* special ways of opening text vs. binary files. */
@@ -597,6 +598,7 @@ typedef Htablep *Htablepp;
 /* String table node - used only by the interned string table (Strtab). */
 typedef struct Strnode {
 	struct Strnode *next;   /* collision chain */
+	Strhdrp hdr;           /* metadata stored immediately before str */
 	Symstr str;             /* the interned string */
 } Strnode;
 

@@ -39,6 +39,16 @@ bi_debug(int argc)
 	if ( strcmp(t,"ht") == 0 ) {
 		htlists();
 	}
+	else if ( strcmp(t,"str") == 0 ) {
+		strstatsprint();
+	}
+	else if ( strcmp(t,"strcheck") == 0 ) {
+		if ( strtabcheck() )
+			eprint("string table check: ok\n");
+	}
+	else if ( strcmp(t,"strgc") == 0 ) {
+		strgcdryrun(1);
+	}
 #ifdef MDEBUG
 	else if ( strcmp(t,"mmreset") == 0 ) {
 		mmreset();
@@ -1598,6 +1608,8 @@ bi_garbcollect(int argc)
 		execerror("usage: garbcollect()");
 	phcheck();
 	htcheck();
+	if ( ! strgcdryrun(0) )
+		execerror("string table check failed during garbcollect()");
 	ret(Nullval);
 }
 

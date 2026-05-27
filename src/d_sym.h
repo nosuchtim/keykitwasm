@@ -116,6 +116,12 @@ void htlists(void)
 ;
 Symstr uniqstr(char *s)
 ;
+void strstatsprint(void)
+;
+int strtabcheck(void)
+;
+int strgcdryrun(int verbose)
+;
 int isundefd(Symbolp s)
 ;
 Hnodep hashtable(Htablep ht,Datum key,int action)

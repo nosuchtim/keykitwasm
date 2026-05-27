@@ -70,6 +70,7 @@
   "slowdown.k",
   "sock.k",
   "sockutil.k",
+  "stringtest.k",
   "typealot.k",
   "updatelib.k",
   "util1.k",
